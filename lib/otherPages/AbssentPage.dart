@@ -1,9 +1,8 @@
 import 'package:ai_barcode_scanner/ai_barcode_scanner.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:fatma_elorbany_absent/otherPages/the%20student%20who%20just%20get%20removed.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
 import '../bottomShets/more Bottom Sheet In Absent Page.dart';
 import '../cards/StudentWidget.dart';
 import '../colors_app.dart';
@@ -29,8 +28,8 @@ class Abssentpage extends StatefulWidget {
   State<Abssentpage> createState() => _AbssentpageState();
 }
 
-class _AbssentpageState extends State<Abssentpage>
-    with AutomaticKeepAliveClientMixin<Abssentpage> {
+class _AbssentpageState extends State<Abssentpage> {
+  final AudioPlayer _audioPlayer = AudioPlayer();
   final _searchController = TextEditingController();
   List<Studentmodel> studentsList = [];
   List<Studentmodel> attendStudents = [];
@@ -47,22 +46,28 @@ class _AbssentpageState extends State<Abssentpage>
   // New flag for loading state
 
 //functions================================================================================================================================
+  Future<void> _playCorrectSound() async {
+    await _audioPlayer.play(AssetSource('sounds/correct.mp3'));
+  }
+
+  Future<void> _playErortSound() async {
+    await _audioPlayer.play(AssetSource('sounds/error.mp3'));
+  }
 
   Future<void> _fetchAbsenceRecord() async {
     setState(() {
       isLoading = true; // بدء التحميل
     });
     try {
-      AbsenceModel? absentStudents = await Firebasefunctions.getAbsenceByDate(
+      AbsenceModel? absentRecord = await Firebasefunctions.getAbsenceByDate(
           widget.selectedDay, widget.magmo3aModel.id, widget.selectedDateStr);
       if (mounted) {
         // هنا
-        if (absentStudents != null) {
+        if (absentRecord != null) {
           setState(() {
-            attendStudents = absentStudents.attendStudents;
-            numberofstudents = absentStudents.numberOfStudents;
-            studentsList = absentStudents.absentStudents;
-            attendStudents = absentStudents.attendStudents;
+            attendStudents = absentRecord.attendStudents;
+            numberofstudents = absentRecord.numberOfStudents;
+            studentsList = absentRecord.absentStudents;
             filteredStudentsList = studentsList;
             isAttendanceStarted = true;
             isLoading = false;
@@ -87,23 +92,12 @@ class _AbssentpageState extends State<Abssentpage>
       setState(() {
         isLoading = true; // Start loading
       });
-      Stream<QuerySnapshot<Studentmodel>>? snapshotStream;
-      if (widget.magmo3aModel.days == "Saturday" ||
-          widget.magmo3aModel.days == "Sunday") {
-        snapshotStream = Firebasefunctions.getStudentsByFirstDayId(
-            widget.magmo3aModel.grade ?? "", widget.magmo3aModel.id);
-      } else if (widget.magmo3aModel.days == "Monday" ||
-          widget.magmo3aModel.days == "Tuesday") {
-        snapshotStream = Firebasefunctions.getStudentsBySecondDayId(
-            widget.magmo3aModel.grade ?? "", widget.magmo3aModel.id);
-      } else if (widget.magmo3aModel.days == "Wednesday" ||
-          widget.magmo3aModel.days == "Thursday") {
-        snapshotStream = Firebasefunctions.getStudentsByThirdDayId(
-            widget.magmo3aModel.grade ?? "", widget.magmo3aModel.id);
-      } else if (widget.magmo3aModel.days == "Friday") {
-        snapshotStream = Firebasefunctions.getStudentsByForthDayId(
-            widget.magmo3aModel.grade ?? "", widget.magmo3aModel.id);
-      }
+      // Directly call the new function getStudentsByGroupId
+      Stream<QuerySnapshot<Studentmodel>>? snapshotStream =
+          Firebasefunctions.getStudentsByGroupId(
+        widget.magmo3aModel.grade ?? "",
+        widget.magmo3aModel.id,
+      );
 
       snapshotStream?.listen((snapshot) {
         if (mounted) {
@@ -122,7 +116,7 @@ class _AbssentpageState extends State<Abssentpage>
     }
   }
 
-  Future<void> addStudentToList(grade, student) async {
+  Future<void> addStudentToList(grade, student, realStudentId) async {
     // Fetch student data from Firestore
 
     if (student != null) {
@@ -131,8 +125,9 @@ class _AbssentpageState extends State<Abssentpage>
 
       if (isStudentInList) {
         // Show a Snackbar indicating the student is already in the attendance list
+        _playErortSound();
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             backgroundColor: Colors.red,
             content: Text('This student is already in the attendance list.'),
             duration:
@@ -141,9 +136,11 @@ class _AbssentpageState extends State<Abssentpage>
         );
       } else {
         // Add the student to the list if they are not already in the attendance list
-        setState(() {
-          attendStudents.add(student); // Add student to the list
-        });
+
+        attendStudents.add(student);
+        // Remove the student from the students list
+        studentsList.removeWhere((student) =>
+            student.id == realStudentId); // Add student to the list
 
         // Update the AbsenceModel with the new list of students
         AbsenceModel absenceModel = AbsenceModel(
@@ -187,16 +184,14 @@ class _AbssentpageState extends State<Abssentpage>
 
   Future<void> updateStudentAttendanceAndAbsence(
       String grade, String studentId, Studentmodel student) async {
-
     student.numberOfAttendantDays = (student.numberOfAttendantDays ?? 0) + 1;
     student.numberOfAbsentDays = ((student.numberOfAbsentDays ?? 0) - 1)
         .clamp(0, double.infinity)
         .toInt();
 
-
 // Save the old values of lastDayStudentCame and lastDateStudentCame
-     lastTimeDay = student.lastDayStudentCame;
-     lastTimeDate = student.lastDateStudentCame;
+    lastTimeDay = student.lastDayStudentCame;
+    lastTimeDate = student.lastDateStudentCame;
 
 // Update the student's last day and date to the current date and day
     student.lastDayStudentCame = widget.selectedDay;
@@ -211,8 +206,8 @@ class _AbssentpageState extends State<Abssentpage>
   }
 
   Future<void> scanQrcode() async {
-    // Navigate to the QR code scanner page
-    await Navigator.of(context).push(
+    Navigator.of(context)
+        .push(
       MaterialPageRoute(
         builder: (context) => AiBarcodeScanner(
           onDispose: () {
@@ -225,65 +220,40 @@ class _AbssentpageState extends State<Abssentpage>
           onDetect: (BarcodeCapture capture) async {
             final String? scannedValue = capture.barcodes.first.rawValue;
             if (scannedValue != null) {
-              // Get the student from Firebase
               Studentmodel? student = await Firebasefunctions.getStudentById(
                   widget.magmo3aModel.grade ?? "", scannedValue);
 
-              if (student != null) {
-                // Add student to the list
+              if (student != null &&
+                  student.hisGroupsId?.contains(widget.magmo3aModel.id) == true) {
                 await addStudentToList(
-                    widget.magmo3aModel.grade ?? "", student);
-                setState(() {
-                  // Remove the student from the students list
-                  studentsList
-                      .removeWhere((student) => student.id == scannedValue);
-
-                  // Update AbsenceModel
-                  AbsenceModel absenceModel = AbsenceModel(
-                    attendStudents: attendStudents,
-                    numberOfStudents: numberofstudents,
-                    date: widget.selectedDateStr,
-                    absentStudents: studentsList,
-                  );
-
-                  // Update Absence by date
-                  Firebasefunctions.updateAbsenceByDateInSubcollection(
-                    widget.selectedDay,
-                    widget.magmo3aModel.id,
-                    widget.selectedDateStr,
-                    absenceModel,
-                  );
-                });
-                // Update the student's attendance and absence
+                    widget.magmo3aModel.grade ?? "", student, scannedValue);
                 updateStudentAttendanceAndAbsence(
-                  widget.magmo3aModel.grade ?? "",// Pass grade
-                  scannedValue, // Pass student ID
-                  student, // Pass student model
-                );
-                // Navigate to the student removal page
+                    widget.magmo3aModel.grade ?? "", scannedValue, student);
+
                 isStudentInList
                     ? null
-                    : Navigator.pushAndRemoveUntil(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => Thestudentwhojustgetremoved(
-                            lastTimeDate: lastTimeDate,
-                            lastTimeDay: lastTimeDay,
-                            selectedDate: widget.selectedDay,
-                            selectedDateStr: widget.selectedDateStr,
-                            magmo3aModel: widget.magmo3aModel,
-                            student: student,
-                          ),
-                        ),
-                        (route) => false,
-                      );
+                    : {
+                  _playCorrectSound(),
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      backgroundColor: Colors.green,
+                      content: Text("Student passes"),
+                      duration: Duration(seconds: 1),
+                    ),
+                  ),
+                };
+                // بس من غير ما تعمل pop هنا
               } else {
-                // Show error message using ScaffoldMessenger
+                _playErortSound();
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     backgroundColor: Colors.red,
-                    content: Text("Student not found!"),
-                    duration: Duration(seconds: 2),
+                    content: Text(
+                      student == null
+                          ? "Student not found!"
+                          : "Student is not part of this group!",
+                    ),
+                    duration: const Duration(seconds: 1),
                   ),
                 );
               }
@@ -291,8 +261,13 @@ class _AbssentpageState extends State<Abssentpage>
           },
         ),
       ),
-    );
+    )
+        .then((_) {
+      setState(() {
+      });
+    });
   }
+
 
 //functions================================================================================================================================
 
@@ -346,7 +321,7 @@ class _AbssentpageState extends State<Abssentpage>
   bool _isValidDate() {
     DateTime selectedDate = DateTime.parse(widget.selectedDateStr);
     DateTime todayDate = DateTime.now();
-    DateTime tomorrowDate = todayDate.add(Duration(days: 1));
+    DateTime tomorrowDate = todayDate.add(const Duration(days: 1));
     return selectedDate.isBefore(tomorrowDate) ||
         selectedDate.isAtSameMomentAs(tomorrowDate);
   }
@@ -355,13 +330,12 @@ class _AbssentpageState extends State<Abssentpage>
   Widget build(BuildContext context) {
     DateTime selectedDate = DateTime.parse(widget.selectedDateStr);
     DateTime todayDate = DateTime.now();
-    super.build(context);
     DateTime tomorrowDate =
-        todayDate.add(Duration(days: 1)); // Calculate tomorrow's date
+        todayDate.add(const Duration(days: 1)); // Calculate tomorrow's date
 
     return Scaffold(
       appBar: AppBar(
-        shape: RoundedRectangleBorder(
+        shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.only(
             bottomLeft: Radius.circular(30),
             bottomRight: Radius.circular(30),
@@ -372,11 +346,11 @@ class _AbssentpageState extends State<Abssentpage>
           onPressed: () {
             Navigator.pushAndRemoveUntil(
               context,
-              MaterialPageRoute(builder: (context) => Homescreen()),
+              MaterialPageRoute(builder: (context) => const Homescreen()),
               (route) => false,
             );
           },
-          icon: Icon(Icons.arrow_back_ios, color: app_colors.orange),
+          icon: const Icon(Icons.arrow_back_ios, color: app_colors.orange),
         ),
         backgroundColor: app_colors.green,
         title: Image.asset(
@@ -405,7 +379,7 @@ class _AbssentpageState extends State<Abssentpage>
               onPressed: () async {
                 showModalBottomSheet(
                   context: context,
-                  shape: RoundedRectangleBorder(
+                  shape: const RoundedRectangleBorder(
                     borderRadius:
                         BorderRadius.vertical(top: Radius.circular(16)),
                   ),
@@ -429,9 +403,9 @@ class _AbssentpageState extends State<Abssentpage>
         bottom: isAttendanceStarted
             ? PreferredSize(
                 preferredSize:
-                    Size.fromHeight(80), // Adjust the height as needed
+                    const Size.fromHeight(80), // Adjust the height as needed
                 child: Container(
-                  decoration: BoxDecoration(
+                  decoration: const BoxDecoration(
                     color: app_colors.green,
                     borderRadius: BorderRadius.only(
                       bottomLeft: Radius.circular(25),
@@ -443,30 +417,31 @@ class _AbssentpageState extends State<Abssentpage>
                     // Center the column items
                     children: [
                       Padding(
-                          padding: EdgeInsets.symmetric(
+                          padding: const EdgeInsets.symmetric(
                               vertical: 10, horizontal: 15),
                           child: TextFormField(
-                            style: TextStyle(color: app_colors.green),
+                            style: const TextStyle(color: app_colors.green),
                             decoration: InputDecoration(
                               filled: true,
                               fillColor: Colors.white,
                               hintText: 'Search',
-                              hintStyle: TextStyle(color: app_colors.green),
-                              contentPadding: EdgeInsets.symmetric(
+                              hintStyle:
+                                  const TextStyle(color: app_colors.green),
+                              contentPadding: const EdgeInsets.symmetric(
                                   vertical: 15.0, horizontal: 20.0),
                               enabledBorder: OutlineInputBorder(
-                                borderSide: BorderSide(
+                                borderSide: const BorderSide(
                                     color: app_colors.orange, width: 2.0),
                                 borderRadius: BorderRadius.circular(20.0),
                               ),
                               focusedBorder: OutlineInputBorder(
-                                borderSide: BorderSide(
+                                borderSide: const BorderSide(
                                     color: app_colors.orange, width: 2.0),
                                 borderRadius: BorderRadius.circular(20.0),
                               ),
                               suffixIcon: IconButton(
-                                icon:
-                                    Icon(Icons.clear, color: app_colors.orange),
+                                icon: const Icon(Icons.clear,
+                                    color: app_colors.orange),
                                 onPressed: () {
                                   _searchController.clear();
                                   _filterStudents(''); // Clear filter
@@ -490,11 +465,11 @@ class _AbssentpageState extends State<Abssentpage>
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Text('Total Students:  $numberofstudents',
-                                      style:
-                                          TextStyle(color: app_colors.orange)),
+                                      style: const TextStyle(
+                                          color: app_colors.orange)),
                                 ],
                               ),
-                              SizedBox(height: 5),
+                              const SizedBox(height: 5),
                               Row(
                                 mainAxisSize: MainAxisSize.max,
                                 mainAxisAlignment:
@@ -502,17 +477,17 @@ class _AbssentpageState extends State<Abssentpage>
                                 children: [
                                   Text(
                                       'Absent Students:  ${studentsList.length}',
-                                      style:
-                                          TextStyle(color: app_colors.orange)),
+                                      style: const TextStyle(
+                                          color: app_colors.orange)),
 
                                   // Add a SizedBox here for spacing
-                                  SizedBox(
+                                  const SizedBox(
                                       width: 30), // Adjust the width as needed
 
                                   Text(
-                                      'Present Students:  ${numberofstudents! - studentsList.length} ',
-                                      style:
-                                          TextStyle(color: app_colors.orange)),
+                                      'Present Students:  ${attendStudents.length} ',
+                                      style: const TextStyle(
+                                          color: app_colors.orange)),
                                 ],
                               ),
                             ],
@@ -538,21 +513,21 @@ class _AbssentpageState extends State<Abssentpage>
               padding: const EdgeInsets.only(bottom: 8),
               child: Column(
                 children: [
-                  SizedBox(height: 10),
+                  const SizedBox(height: 10),
                   if (isLoading)
-                    Center(
+                    const Center(
                       child: CircularProgressIndicator(
                         valueColor:
                             AlwaysStoppedAnimation<Color>(app_colors.green),
                       ),
                     )
                   else if (selectedDate.isAfter(tomorrowDate))
-                    Text(
+                    const Text(
                       "You can't take attendance for future dates beyond tomorrow.",
                       style: TextStyle(color: Colors.red, fontSize: 16),
                     )
                   else if (isAttendanceStarted)
-                    Text("These are the students who are absent")
+                    const Text("These are the students who are absent")
                   else if (!isAttendanceStarted &&
                       selectedDate.isBefore(tomorrowDate))
                     ElevatedButton(
@@ -575,13 +550,13 @@ class _AbssentpageState extends State<Abssentpage>
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: app_colors.orange,
-                        padding:
-                            EdgeInsets.symmetric(vertical: 15, horizontal: 30),
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 15, horizontal: 30),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
                         ),
                       ),
-                      child: Text(
+                      child: const Text(
                         'Start Taking Absence',
                         style: TextStyle(fontSize: 18, color: Colors.white),
                       ),
@@ -589,7 +564,7 @@ class _AbssentpageState extends State<Abssentpage>
                   if (isAttendanceStarted) ...[
                     Expanded(
                       child: ListView.builder(
-                        physics: BouncingScrollPhysics(),
+                        physics: const BouncingScrollPhysics(),
                         itemCount: filteredStudentsList.length,
                         cacheExtent: 1000.0,
                         itemBuilder: (context, index) {
@@ -619,13 +594,12 @@ class _AbssentpageState extends State<Abssentpage>
                                           style: ElevatedButton.styleFrom(
                                             backgroundColor: Colors.green,
                                           ),
-                                          child: Text('Remove',
+                                          child: const Text('Remove',
                                               style: TextStyle(
                                                   color: Colors.white)),
                                           onPressed: () async {
                                             // Perform asynchronous tasks outside of setState()
                                             final student = studentsList[index];
-
                                             // Update student's attendance and absence days
                                             await updateStudentAttendanceAndAbsence(
                                               widget.magmo3aModel.grade ?? "",
@@ -635,39 +609,11 @@ class _AbssentpageState extends State<Abssentpage>
                                             );
 
                                             // Add the student to the appropriate list
-                                            addStudentToList(
-                                              widget.magmo3aModel.grade,
-                                              student,
-                                            );
-                                            studentsList.removeWhere(
-                                                (student) =>
-                                                    student.id ==
-                                                    studentsList[index].id);
-
-                                            // Create the updated AbsenceModel
-                                            AbsenceModel absenceModel =
-                                                AbsenceModel(
-                                              attendStudents: attendStudents,
-                                              date: widget.selectedDateStr,
-                                              numberOfStudents:
-                                                  numberofstudents,
-                                              absentStudents: studentsList,
-                                            );
-
-                                            // Update the AbsenceModel in Firestore
-                                            await Firebasefunctions
-                                                .updateAbsenceByDateInSubcollection(
-                                              widget.selectedDay,
-                                              widget.magmo3aModel.id,
-                                              widget.selectedDateStr,
-                                              absenceModel,
-                                            );
-
-                                            // Now that async operations are done, update the state
-                                            setState(() {
-                                              // You can put any UI update here if needed
-                                            });
-
+                                            await addStudentToList(
+                                                widget.magmo3aModel.grade,
+                                                student,
+                                                studentsList[index].id);
+                                            setState(() {});
                                             // Pop the current screen after the updates
                                             Navigator.of(context).pop();
                                           },
@@ -698,8 +644,4 @@ class _AbssentpageState extends State<Abssentpage>
       ),
     );
   }
-
-  @override
-  // TODO: implement wantKeepAlive
-  bool get wantKeepAlive => true;
 }

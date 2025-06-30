@@ -4,7 +4,6 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 import '../../colors_app.dart';
 import '../../models/Studentmodel.dart';
-
 import '../Alertdialogs/Notify Absence.dart';
 import '../firbase/FirebaseFunctions.dart';
 import '../models/Magmo3amodel.dart';
@@ -37,67 +36,86 @@ class _StudentWidgetState extends State<StudentWidget> {
     super.initState();
     _loadNotes();
   }
+  String _formatTime12Hour(TimeOfDay time) {
+    final int hour = time.hourOfPeriod == 0
+        ? 12
+        : time.hourOfPeriod; // Convert 0 to 12 for midnight/noon
+    final String period = time.period == DayPeriod.am ? 'AM' : 'PM';
+    final String minute =
+    time.minute.toString().padLeft(2, '0'); // Ensure two digits for minutes
+    return '$hour:$minute $period';
+  }
 
+
+  void _sendMessageToParent(String parentRole) {
+    String genderSpecificMessage;
+
+    // Determine the parent's role and customize the message
+    if (parentRole == 'father') {
+      genderSpecificMessage = """
+عزيزي والد ${widget.studentModel.name} أو والدته ${widget.studentModel.name}،
+
+ابنك ${widget.studentModel.name} غائب اليوم عن حصة مس فاطمة العرباني.
+
+أطيب التحيات،
+فاطمة العرباني
+      """;
+    } else if (parentRole == 'mother') {
+      genderSpecificMessage = """
+عزيزتي والدة ${widget.studentModel.name} أو والده ${widget.studentModel.name}،
+
+ابنك ${widget.studentModel.name} غائب اليوم عن حصة مس فاطمة العرباني.
+
+أطيب التحيات،
+فاطمة العرباني
+      """;
+    } else {
+      genderSpecificMessage = """
+عزيزي ${widget.studentModel.name}،
+
+أنت غائب اليوم عن حصة مس فاطمة العرباني.
+      """;
+    }
+
+    // Send the message based on the parent's role
+    if (parentRole == 'father') {
+      _sendWhatsAppMessage(widget.studentModel.fatherPhone!, genderSpecificMessage);
+    } else if (parentRole == 'mother') {
+      _sendWhatsAppMessage(widget.studentModel.motherPhone!, genderSpecificMessage);
+    } else {
+      _sendWhatsAppMessage(widget.studentModel.phoneNumber!, genderSpecificMessage);
+    }
+  }
   Future<void> _sendWhatsAppMessage(String phoneNumber, String message) async {
+    // Format the phone number
     final String formattedPhone = phoneNumber.startsWith('0')
-        ? '20${phoneNumber.substring(1)}'
+        ? '+20${phoneNumber.substring(1)}'
         : phoneNumber;
 
+    // Print the formatted phone number
+    print("Formatted Phone Number: $formattedPhone");
+
+    // Encode the message
     final String encodedMessage = Uri.encodeComponent(message);
 
     // Build the WhatsApp URL
     final Uri url = Uri.parse(
-        'whatsapp://send?phone=$formattedPhone&text=${encodedMessage}');
+        'whatsapp://send?phone=$formattedPhone&text=$encodedMessage');
+
+    // Print the WhatsApp URL for debugging
+    print("WhatsApp URL: $url");
 
     try {
-      // Check if the URL can be launched
-      if (await canLaunchUrl(url)) {
+      // Check if WhatsApp can be launched
+      bool canLaunch = await canLaunchUrl(url);
+      if (canLaunch) {
         await launchUrl(url, mode: LaunchMode.externalApplication);
       } else {
-        print("Cannot open WhatsApp");
+        print("WhatsApp is not installed or cannot be opened.");
       }
     } catch (e) {
       print("Error launching WhatsApp: $e");
     }
-  }
-
-  void _sendMessageToFather() {
-    String message = """
-Dear father, your child ${widget.studentModel.name} is absent today from Mr. Ibrahim Yassin's class.
-
-عزيزي الأب، ابنك ${widget.studentModel.name} غائب اليوم عن حصة مستر ابراهيم ياسين.
-  
-Kind regards,
-Mr. Ibrahim Yassin
-أطيب التحيات،
-ابراهيم ياسين
-""";
-    _sendWhatsAppMessage(widget.studentModel.fatherPhone!, message);
-  }
-
-  // Function to send message to Mother
-  void _sendMessageToMother() {
-    String message = """
-Dear mother, your child ${widget.studentModel.name} is absent today from Mr. Ibrahim Yassin's class.
-
-عزيزتي الأم، ابنك ${widget.studentModel.name} غائب اليوم عن حصة مستر ابراهيم ياسين.
-  
-Kind regards,
-Mr. Ibrahim Yassin
-أطيب التحيات،
-ابراهيم ياسين
-""";
-    _sendWhatsAppMessage(widget.studentModel.motherPhone!, message);
-  }
-
-  // Function to send message to Student
-  void _sendMessageToStudent() {
-    String message = """
-Dear ${widget.studentModel.name}, you are absent today from Mr. Ibrahim Yassin's class.
-
-عزيزي ${widget.studentModel.name}، أنت غائب اليوم عن حصة مستر ابراهيم ياسين.
-""";
-    _sendWhatsAppMessage(widget.studentModel.phoneNumber!, message);
   }
 
   Future<void> _loadNotes() async {
@@ -154,28 +172,39 @@ Dear ${widget.studentModel.name}, you are absent today from Mr. Ibrahim Yassin's
                       showDialog(
                         context: context,
                         builder: (context) => AlertDialog(
-                        backgroundColor: app_colors.ligthGreen,
+                          backgroundColor: app_colors.ligthGreen,
                           title: Text(
-                              'Who would you like to send the message to?',style: TextStyle(color: app_colors.green),),
+                            'Who would you like to send the message to?',
+                            style: TextStyle(color: app_colors.green),
+                          ),
                           content: SelectRecipientDialogContent(
-                            sendMessageToFather: _sendMessageToFather,
-                            sendMessageToMother: _sendMessageToMother,
-                            sendMessageToStudent: _sendMessageToStudent,
+                            sendMessageToFather: () => _sendMessageToParent('father'),
+                            sendMessageToMother: () => _sendMessageToParent('mother'),
+                            sendMessageToStudent: () => _sendMessageToParent('student'),
                           ),
                           actions: [
                             Material(
-                              color: Colors.transparent, // Make the material background transparent
-                              elevation: 10, // Set elevation for the shadow effect
-                              shadowColor: Colors.black.withOpacity(0.5), // Set shadow color
-                              borderRadius: BorderRadius.circular(10), // Optional: Add rounded corners
+                              color: Colors.transparent,
+                              // Make the material background transparent
+                              elevation: 10,
+                              // Set elevation for the shadow effect
+                              shadowColor: Colors.black.withOpacity(0.5),
+                              // Set shadow color
+                              borderRadius: BorderRadius.circular(10),
+                              // Optional: Add rounded corners
                               child: TextButton(
                                 onPressed: () {
                                   Navigator.of(context).pop();
                                 },
                                 style: TextButton.styleFrom(
-                                  backgroundColor: app_colors.orange, // Set background color
-                                  foregroundColor: Colors.white, // Set text color for contrast
-                                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16), // Optional: Adjust padding
+                                  backgroundColor: app_colors.orange,
+                                  // Set background color
+                                  foregroundColor: Colors.white,
+                                  // Set text color for contrast
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 12,
+                                      horizontal:
+                                          16), // Optional: Adjust padding
                                 ),
                                 child: const Text('Cancel'),
                               ),
@@ -360,14 +389,18 @@ Dear ${widget.studentModel.name}, you are absent today from Mr. Ibrahim Yassin's
   }
 
   Widget _buildStudentDaysList() {
-    List<String?> days = [
-      widget.studentModel.firstDay,
-      widget.studentModel.secondDay,
-      widget.studentModel.thirdDay,
-      widget.studentModel.forthday,
-    ];
+    // Assuming `studentModel.hisGroups` is a list of Magmo3amodel
+    List<Map<String, dynamic>> daysWithTimes = widget.studentModel.hisGroups?.map((group) {
+      return {
+        'day': group.days, // Group days as a string (e.g., "Monday, Wednesday")
+        'time': group.time != null
+            ? {'hour': group.time?.hour, 'minute': group.time?.minute}
+            : null,
+      };
+    }).toList() ?? [];
 
-    days.removeWhere((day) => day == null);
+    // Remove entries where day is null
+    daysWithTimes.removeWhere((entry) => entry['day'] == null);
 
     return Row(
       children: [
@@ -383,29 +416,48 @@ Dear ${widget.studentModel.name}, you are absent today from Mr. Ibrahim Yassin's
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
-              children: days
-                  .map((day) => Row(
+              children: daysWithTimes.map((entry) {
+                String day = entry['day'] ?? '';
+                TimeOfDay? time = entry['time'] != null
+                    ? TimeOfDay(hour: entry['time']['hour'], minute: entry['time']['minute'])
+                    : null;
+
+                // Convert TimeOfDay to 12-hour format with AM/PM
+                String timeString = time != null ? _formatTime12Hour(time) : 'No Time';
+
+                return Row(
+                  children: [
+                    Chip(
+                      label: Column(
                         children: [
-                          Chip(
-                            label: Text(
-                              day!,
-                              style: const TextStyle(
-                                color: app_colors.orange,
-                              ),
+                          Text(
+                            day,
+                            style: const TextStyle(
+                              color: app_colors.orange,
                             ),
-                            backgroundColor: app_colors.green,
                           ),
-                          const SizedBox(width: 8),
+                          Text(
+                            timeString,
+                            style: const TextStyle(
+                              color: app_colors.orange,
+                              fontSize: 12, // Smaller font for time
+                            ),
+                          ),
                         ],
-                      ))
-                  .toList(),
+                      ),
+                      backgroundColor: app_colors.green,
+                    ),
+                    const SizedBox(width: 8),
+                    // Add some space between each day
+                  ],
+                );
+              }).toList(),
             ),
           ),
         ),
       ],
     );
   }
-
   // Method to build notes for the selected date
   Widget _buildNotesForDate(String dateKey) {
     if (widget.studentModel.notes == null ||

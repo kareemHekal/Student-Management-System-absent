@@ -78,14 +78,18 @@ class normalstudentwiget extends StatelessWidget {
 
   // Widget to display student-specific days if available
   Widget _buildStudentDaysList() {
-    List<String?> days = [
-      studentModel?.firstDay,
-      studentModel?.secondDay,
-      studentModel?.thirdDay,
-      studentModel?.forthday,
-    ];
+    // Assuming `studentModel.hisGroups` is a list of Magmo3amodel
+    List<Map<String, dynamic>> daysWithTimes = studentModel?.hisGroups?.map((group) {
+      return {
+        'day': group.days, // Group days as a string (e.g., "Monday, Wednesday")
+        'time': group.time != null
+            ? {'hour': group.time?.hour, 'minute': group.time?.minute}
+            : null,
+      };
+    }).toList() ?? [];
 
-    days.removeWhere((day) => day == null);
+    // Remove entries where day is null
+    daysWithTimes.removeWhere((entry) => entry['day'] == null);
 
     return Row(
       children: [
@@ -101,28 +105,56 @@ class normalstudentwiget extends StatelessWidget {
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
-              children: days.map((day) => Row(
-                children: [
-                  Chip(
-                    label: Text(
-                      day!,
-                      style: const TextStyle(
-                        color: app_colors.orange,
+              children: daysWithTimes.map((entry) {
+                String day = entry['day'] ?? '';
+                TimeOfDay? time = entry['time'] != null
+                    ? TimeOfDay(hour: entry['time']['hour'], minute: entry['time']['minute'])
+                    : null;
+
+                // Convert TimeOfDay to 12-hour format with AM/PM
+                String timeString = time != null ? _formatTime12Hour(time) : 'No Time';
+
+                return Row(
+                  children: [
+                    Chip(
+                      label: Column(
+                        children: [
+                          Text(
+                            day,
+                            style: const TextStyle(
+                              color: app_colors.orange,
+                            ),
+                          ),
+                          Text(
+                            timeString,
+                            style: const TextStyle(
+                              color: app_colors.orange,
+                              fontSize: 12, // Smaller font for time
+                            ),
+                          ),
+                        ],
                       ),
+                      backgroundColor: app_colors.green,
                     ),
-                    backgroundColor: app_colors.green,
-                  ),
-                  const SizedBox(width: 8),
-                ],
-              )).toList(),
+                    const SizedBox(width: 8),
+                    // Add some space between each day
+                  ],
+                );
+              }).toList(),
             ),
           ),
         ),
       ],
     );
   }
-
-
-
+  String _formatTime12Hour(TimeOfDay time) {
+    final int hour = time.hourOfPeriod == 0
+        ? 12
+        : time.hourOfPeriod; // Convert 0 to 12 for midnight/noon
+    final String period = time.period == DayPeriod.am ? 'AM' : 'PM';
+    final String minute =
+    time.minute.toString().padLeft(2, '0'); // Ensure two digits for minutes
+    return '$hour:$minute $period';
+  }
 
 }

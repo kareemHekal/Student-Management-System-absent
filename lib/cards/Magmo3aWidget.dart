@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../models/Magmo3amodel.dart';
 import '../otherPages/AbssentPage.dart';
 import '../colors_app.dart';
@@ -8,7 +9,8 @@ class Magmo3aWidget extends StatelessWidget {
   final String selectedDateStr;
   final String selectedDay;
 
-  const Magmo3aWidget({required this.magmo3aModel,required this.selectedDateStr,required this.selectedDay ,super.key});
+  const Magmo3aWidget(
+      {required this.magmo3aModel, required this.selectedDateStr, required this.selectedDay, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -67,27 +69,27 @@ class Magmo3aWidget extends StatelessWidget {
       child: ListView(
         scrollDirection: Axis.horizontal,
         children: [
-      Padding(
-      padding: const EdgeInsets.all(5.0), // increased padding
-      child: Container(
-        decoration: BoxDecoration(
-          color: app_colors.green,
-          border: Border.all(
-            color: app_colors.orange,
-            width: 2, // increased border width
-          ),
-          borderRadius: BorderRadius.circular(15), // increased radius
-        ),
-        padding: const EdgeInsets.all(8.0), // added padding
-        child: Text(
-          magmo3aModel.days??"", // Display the full day name
-          style: TextStyle(
-            fontSize: 30, // increased font size
-            color: app_colors.orange,
-          ),
-        ),
-      ),
-    )
+          Padding(
+            padding: const EdgeInsets.all(5.0), // increased padding
+            child: Container(
+              decoration: BoxDecoration(
+                color: app_colors.green,
+                border: Border.all(
+                  color: app_colors.orange,
+                  width: 2, // increased border width
+                ),
+                borderRadius: BorderRadius.circular(15), // increased radius
+              ),
+              padding: const EdgeInsets.all(8.0), // added padding
+              child: Text(
+                magmo3aModel.days ?? "", // Display the full day name
+                style: TextStyle(
+                  fontSize: 30, // increased font size
+                  color: app_colors.orange,
+                ),
+              ),
+            ),
+          )
         ],
       ),
     );
@@ -122,7 +124,7 @@ class Magmo3aWidget extends StatelessWidget {
                   ],
                 ),
               ),
-              SizedBox(width:10 ,),
+              SizedBox(width: 10,),
               RichText(
                 text: TextSpan(
                   children: [
@@ -145,7 +147,7 @@ class Magmo3aWidget extends StatelessWidget {
                   ],
                 ),
               ),
-              SizedBox(width:10 ,),
+              SizedBox(width: 10,),
 
             ],
           ),
@@ -153,6 +155,7 @@ class Magmo3aWidget extends StatelessWidget {
       ),
     );
   }
+
   String _formatTime(TimeOfDay time) {
     final hour = time.hour;
     final minute = time.minute;
@@ -171,18 +174,13 @@ class Magmo3aWidget extends StatelessWidget {
       children: [
         IconButton(
           onPressed: () {
-
             Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => Abssentpage(
-                  selectedDay: selectedDay,
-                  magmo3aModel: magmo3aModel,
-                  selectedDateStr: selectedDateStr,
-                ),
-              ),
+                context,
+                MaterialPageRoute(builder: (context) =>
+                    Abssentpage(selectedDateStr: selectedDateStr,
+                      magmo3aModel: magmo3aModel,
+                      selectedDay: selectedDay,) ,)
             );
-
           },
 
           icon: Container(

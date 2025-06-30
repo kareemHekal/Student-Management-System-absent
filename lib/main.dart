@@ -1,10 +1,13 @@
+import 'package:bloc/bloc.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:connectivity_plus/connectivity_plus.dart'; // For checking internet connection
+import 'bloc/observer.dart';
 import 'firbase/firebase_options.dart';
 import 'homeScreen.dart';
 import 'dart:io';
 void main() async {
+  Bloc.observer = MyBlocObserver();
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,

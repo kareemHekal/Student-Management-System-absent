@@ -1,31 +1,16 @@
-import 'package:flutter/material.dart';
+import 'Magmo3amodel.dart';
 
 class Studentmodel {
   String id;
   String? name;
   String? grade;
-  String? firstDay;
-  String? secondDay;
-  String? thirdDay;
-  String? forthday;
   String? gender;
   String? phoneNumber;
   String? motherPhone;
   String? fatherPhone;
   List<Map<String, String>>? notes;
-
-  // New ID fields for each day
-  String? firstDayId;
-  String? secondDayId;
-  String? thirdDayId;
-  String? fourthDayId;
-
-  // New time fields for each day
-  TimeOfDay? firstDayTime;
-  TimeOfDay? secondDayTime;
-  TimeOfDay? thirdDayTime;
-  TimeOfDay? forthdayTime;
-
+  List<Magmo3amodel>? hisGroups;
+  List<String>? hisGroupsId;
   String? note;
   String? dateofadd;
   int? numberOfAbsentDays;
@@ -37,28 +22,20 @@ class Studentmodel {
   String? dateOfThirdMonthPaid;
   String? dateOfFourthMonthPaid;
   String? dateOfFifthMonthPaid;
+  String? dateOfExplainingNotePaid;
+  String? dateOfReviewingNotePaid;
 
   Studentmodel({
     this.id = "",
     this.name,
     this.grade,
-    this.firstDay,
-    this.secondDay,
-    this.thirdDay,
-    this.forthday,
     this.gender,
     this.phoneNumber,
     this.motherPhone,
     this.fatherPhone,
     this.notes,
-    this.firstDayId,
-    this.secondDayId,
-    this.thirdDayId,
-    this.fourthDayId,
-    this.firstDayTime,
-    this.secondDayTime,
-    this.thirdDayTime,
-    this.forthdayTime,
+    this.hisGroups,
+    this.hisGroupsId,
     this.note,
     this.dateofadd,
     this.numberOfAbsentDays,
@@ -70,6 +47,8 @@ class Studentmodel {
     this.dateOfThirdMonthPaid,
     this.dateOfFourthMonthPaid,
     this.dateOfFifthMonthPaid,
+    this.dateOfExplainingNotePaid,
+    this.dateOfReviewingNotePaid,
   });
 
   factory Studentmodel.fromJson(Map<String, dynamic> json) {
@@ -78,10 +57,6 @@ class Studentmodel {
       name: json['name'],
       gender: json['gender'],
       grade: json['grade'],
-      firstDay: json['firstDay'],
-      secondDay: json['secondday'],
-      thirdDay: json['thirdday'],
-      forthday: json['forthday'],
       phoneNumber: json['phonenumber'],
       motherPhone: json['mothernumber'],
       fatherPhone: json['fatherphone'],
@@ -90,34 +65,15 @@ class Studentmodel {
       notes: json["notes"] != null
           ? List<Map<String, String>>.from(json["notes"].map((note) => Map<String, String>.from(note)))
           : [],
-      firstDayId: json['firstdayid'],
-      secondDayId: json['secondayid'],
-      thirdDayId: json['thirddayid'],
-      fourthDayId: json['forthdayid'],
-      firstDayTime: json['firstdaytime'] != null
-          ? TimeOfDay(
-        hour: json['firstdaytime']['hour'] ?? 0,
-        minute: json['firstdaytime']['minute'] ?? 0,
-      )
-          : null,
-      secondDayTime: json['seconddaytime'] != null
-          ? TimeOfDay(
-        hour: json['seconddaytime']['hour'] ?? 0,
-        minute: json['seconddaytime']['minute'] ?? 0,
-      )
-          : null,
-      thirdDayTime: json['thirddaytime'] != null
-          ? TimeOfDay(
-        hour: json['thirddaytime']['hour'] ?? 0,
-        minute: json['thirddaytime']['minute'] ?? 0,
-      )
-          : null,
-      forthdayTime: json['forthdaytime'] != null
-          ? TimeOfDay(
-        hour: json['forthdaytime']['hour'] ?? 0,
-        minute: json['forthdaytime']['minute'] ?? 0,
-      )
-          : null,
+
+      hisGroups: json["hisGroups"] != null
+          ? List<Magmo3amodel>.from(json["hisGroups"].map((group) => Magmo3amodel.fromJson(group)))
+          : [],
+
+      hisGroupsId: json["hisGroupsId"] != null
+          ? List<String>.from(json["hisGroupsId"])
+          : [],
+
       numberOfAbsentDays: json['numberOfAbsentDays'] ?? 0,
       numberOfAttendantDays: json['numberOfAttendantDays'] ?? 0,
       lastDayStudentCame: json['lastDayStudentCame'],
@@ -127,6 +83,8 @@ class Studentmodel {
       dateOfThirdMonthPaid: json['dateOfThirdMonthPaid'],
       dateOfFourthMonthPaid: json['dateOfFourthMonthPaid'],
       dateOfFifthMonthPaid: json['dateOfFifthMonthPaid'],
+      dateOfExplainingNotePaid: json['dateOfExplainingNotePaid'],
+      dateOfReviewingNotePaid: json['dateOfReviewingNotePaid'],
     );
   }
 
@@ -136,32 +94,16 @@ class Studentmodel {
       'name': name,
       'gender': gender,
       'grade': grade,
-      'firstDay': firstDay,
-      'secondday': secondDay,
-      'thirdday': thirdDay,
-      'forthday': forthday,
       'phonenumber': phoneNumber,
       'mothernumber': motherPhone,
       'fatherphone': fatherPhone,
       'note': note,
       'dateofadd': dateofadd,
       'notes': notes,
-      'firstdayid': firstDayId,
-      'secondayid': secondDayId,
-      'thirddayid': thirdDayId,
-      'forthdayid': fourthDayId,
-      'firstdaytime': firstDayTime != null
-          ? {'hour': firstDayTime!.hour, 'minute': firstDayTime!.minute}
-          : null,
-      'seconddaytime': secondDayTime != null
-          ? {'hour': secondDayTime!.hour, 'minute': secondDayTime!.minute}
-          : null,
-      'thirddaytime': thirdDayTime != null
-          ? {'hour': thirdDayTime!.hour, 'minute': thirdDayTime!.minute}
-          : null,
-      'forthdaytime': forthdayTime != null
-          ? {'hour': forthdayTime!.hour, 'minute': forthdayTime!.minute}
-          : null,
+      'hisGroups': hisGroups != null
+          ? List<Map<String, dynamic>>.from(hisGroups!.map((group) => group.toJson()))
+          : [],
+      'hisGroupsId': hisGroupsId,
       'numberOfAbsentDays': numberOfAbsentDays,
       'numberOfAttendantDays': numberOfAttendantDays,
       'lastDateStudentCame': lastDateStudentCame,
@@ -171,6 +113,8 @@ class Studentmodel {
       'dateOfThirdMonthPaid': dateOfThirdMonthPaid,
       'dateOfFourthMonthPaid': dateOfFourthMonthPaid,
       'dateOfFifthMonthPaid': dateOfFifthMonthPaid,
+      'dateOfExplainingNotePaid': dateOfExplainingNotePaid,
+      'dateOfReviewingNotePaid': dateOfReviewingNotePaid,
     };
   }
 

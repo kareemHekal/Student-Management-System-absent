@@ -41,34 +41,16 @@ class Firebasefunctions {
     });
   }
 
-  /// Streams students by first day ID.
-  static Stream<QuerySnapshot<Studentmodel>> getStudentsByFirstDayId(String grade, String firstdayid) {
-    return getSecondaryCollection(grade)
-        .where("firstdayid", isEqualTo: firstdayid)
+  static Stream<QuerySnapshot<Studentmodel>> getStudentsByGroupId(
+      String grade,
+      String groupId // The group ID you want to check in the `hisGroups` list
+      ) {
+    var collection = getSecondaryCollection(grade); // Get the collection based on grade
+
+    return collection
+        .where("hisGroupsId", arrayContains: groupId) // Check if the hisGroups array contains the groupId
         .snapshots();
   }
-
-  /// Streams students by second day ID.
-  static Stream<QuerySnapshot<Studentmodel>> getStudentsBySecondDayId(String grade, String seconddayid) {
-    return getSecondaryCollection(grade)
-        .where("seconddayid", isEqualTo: seconddayid)
-        .snapshots();
-  }
-
-  /// Streams students by third day ID.
-  static Stream<QuerySnapshot<Studentmodel>> getStudentsByThirdDayId(String grade, String thirddayid) {
-    return getSecondaryCollection(grade)
-        .where("thirddayid", isEqualTo: thirddayid)
-        .snapshots();
-  }
-
-  /// Streams students by fourth day ID.
-  static Stream<QuerySnapshot<Studentmodel>> getStudentsByForthDayId(String grade, String forthdayid) {
-    return getSecondaryCollection(grade)
-        .where("forthdayid", isEqualTo: forthdayid)
-        .snapshots();
-  }
-
   // =======================================================================
   // Absence Management Functions
   // =======================================================================

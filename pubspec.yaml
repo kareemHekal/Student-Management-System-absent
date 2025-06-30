@@ -46,23 +46,24 @@ dependencies:
   url_launcher: ^6.3.1
   printing: ^5.13.4
   pdf: ^3.11.1
-  flutter_native_splash: ^2.4.1
-flutter_native_splash:
-  color: "#F8C794"
-  image: "assets/images/splash image.png"
-  branding: "assets/images/logokareem.png"
-  branding_mode: bottom
-  branding_bottom_padding: 0
+  bloc: ^9.0.0
+  flutter_bloc: ^9.0.0
+  audioplayers: ^6.1.0
+  loader_overlay: ^4.0.4+1
 
-  android_12:
-    image: "assets/images/splash image.png"
-    color: "#F8C794"
-    icon_background_color: "#F8C794"
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_launcher_icons: ^0.14.3
 
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  min_sdk_android: 23
+  image_path: "assets/images/logo.jpg"
+  adaptive_icon_background: "#543A14"
+  adaptive_icon_foreground: "assets/images/logo.jpg"
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
   # activated in the `analysis_options.yaml` file located at the root of your
@@ -85,6 +86,7 @@ flutter:
   assets:
     - assets/images/
     - assets/icon/
+    - assets/sounds/
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see
