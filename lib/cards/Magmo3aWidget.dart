@@ -10,7 +10,10 @@ class Magmo3aWidget extends StatelessWidget {
   final String selectedDay;
 
   const Magmo3aWidget(
-      {required this.magmo3aModel, required this.selectedDateStr, required this.selectedDay, super.key});
+      {required this.magmo3aModel,
+      required this.selectedDateStr,
+      required this.selectedDay,
+      super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -124,7 +127,9 @@ class Magmo3aWidget extends StatelessWidget {
                   ],
                 ),
               ),
-              SizedBox(width: 10,),
+              SizedBox(
+                width: 10,
+              ),
               RichText(
                 text: TextSpan(
                   children: [
@@ -147,8 +152,9 @@ class Magmo3aWidget extends StatelessWidget {
                   ],
                 ),
               ),
-              SizedBox(width: 10,),
-
+              SizedBox(
+                width: 10,
+              ),
             ],
           ),
         ],
@@ -176,13 +182,14 @@ class Magmo3aWidget extends StatelessWidget {
           onPressed: () {
             Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) =>
-                    Abssentpage(selectedDateStr: selectedDateStr,
-                      magmo3aModel: magmo3aModel,
-                      selectedDay: selectedDay,) ,)
-            );
+                MaterialPageRoute(
+                  builder: (context) => AbsentPage(
+                    selectedDateStr: selectedDateStr,
+                    magmo3aModel: magmo3aModel,
+                    selectedDay: selectedDay,
+                  ),
+                ));
           },
-
           icon: Container(
             decoration: BoxDecoration(
               color: app_colors.green,

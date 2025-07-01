@@ -36,31 +36,22 @@ class _StudentWidgetState extends State<StudentWidget> {
     super.initState();
     _loadNotes();
   }
+
   String _formatTime12Hour(TimeOfDay time) {
     final int hour = time.hourOfPeriod == 0
         ? 12
         : time.hourOfPeriod; // Convert 0 to 12 for midnight/noon
     final String period = time.period == DayPeriod.am ? 'AM' : 'PM';
     final String minute =
-    time.minute.toString().padLeft(2, '0'); // Ensure two digits for minutes
+        time.minute.toString().padLeft(2, '0'); // Ensure two digits for minutes
     return '$hour:$minute $period';
   }
-
 
   void _sendMessageToParent(String parentRole) {
     String genderSpecificMessage;
 
     // Determine the parent's role and customize the message
-    if (parentRole == 'father') {
-      genderSpecificMessage = """
-عزيزي والد ${widget.studentModel.name} أو والدته ${widget.studentModel.name}،
-
-ابنك ${widget.studentModel.name} غائب اليوم عن حصة مس فاطمة العرباني.
-
-أطيب التحيات،
-فاطمة العرباني
-      """;
-    } else if (parentRole == 'mother') {
+    if (parentRole == 'Parent') {
       genderSpecificMessage = """
 عزيزتي والدة ${widget.studentModel.name} أو والده ${widget.studentModel.name}،
 
@@ -77,46 +68,35 @@ class _StudentWidgetState extends State<StudentWidget> {
       """;
     }
 
-    // Send the message based on the parent's role
-    if (parentRole == 'father') {
-      _sendWhatsAppMessage(widget.studentModel.fatherPhone!, genderSpecificMessage);
-    } else if (parentRole == 'mother') {
-      _sendWhatsAppMessage(widget.studentModel.motherPhone!, genderSpecificMessage);
+    if (parentRole == 'mother') {
+      _sendWhatsAppMessage(
+          widget.studentModel.motherPhone!, genderSpecificMessage);
     } else {
-      _sendWhatsAppMessage(widget.studentModel.phoneNumber!, genderSpecificMessage);
+      _sendWhatsAppMessage(
+          widget.studentModel.phoneNumber!, genderSpecificMessage);
     }
   }
-  Future<void> _sendWhatsAppMessage(String phoneNumber, String message) async {
-    // Format the phone number
-    final String formattedPhone = phoneNumber.startsWith('0')
-        ? '+20${phoneNumber.substring(1)}'
-        : phoneNumber;
-
-    // Print the formatted phone number
-    print("Formatted Phone Number: $formattedPhone");
-
-    // Encode the message
+  Future<void> _sendWhatsAppMessage(String rawPhone, String message) async {
+    final cleanedPhone = rawPhone.replaceAll('+', '').replaceAll(' ', '');
+    final String formattedPhone = cleanedPhone.startsWith('0')
+        ? '20${cleanedPhone.substring(1)}'
+        : cleanedPhone;
     final String encodedMessage = Uri.encodeComponent(message);
 
-    // Build the WhatsApp URL
-    final Uri url = Uri.parse(
-        'whatsapp://send?phone=$formattedPhone&text=$encodedMessage');
+    // Build the URL with the message
+    final String url = 'https://wa.me/$formattedPhone?text=$encodedMessage';
 
-    // Print the WhatsApp URL for debugging
-    print("WhatsApp URL: $url");
+    print("Sending to: $formattedPhone");
+    print("Message: $encodedMessage");
+    print("URL: $url");
 
-    try {
-      // Check if WhatsApp can be launched
-      bool canLaunch = await canLaunchUrl(url);
-      if (canLaunch) {
-        await launchUrl(url, mode: LaunchMode.externalApplication);
-      } else {
-        print("WhatsApp is not installed or cannot be opened.");
-      }
-    } catch (e) {
-      print("Error launching WhatsApp: $e");
+    if (await canLaunchUrl(Uri.parse(url))) {
+      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+    } else {
+      print("WhatsApp is not installed or cannot be opened.");
     }
   }
+
 
   Future<void> _loadNotes() async {
     if (!mounted) return;
@@ -178,9 +158,11 @@ class _StudentWidgetState extends State<StudentWidget> {
                             style: TextStyle(color: app_colors.green),
                           ),
                           content: SelectRecipientDialogContent(
-                            sendMessageToFather: () => _sendMessageToParent('father'),
-                            sendMessageToMother: () => _sendMessageToParent('mother'),
-                            sendMessageToStudent: () => _sendMessageToParent('student'),
+
+                            sendMessageToMother: () =>
+                                _sendMessageToParent('mother'),
+                            sendMessageToStudent: () =>
+                                _sendMessageToParent('student'),
                           ),
                           actions: [
                             Material(
@@ -302,10 +284,9 @@ class _StudentWidgetState extends State<StudentWidget> {
                   context, false, "Name:", widget.studentModel.name ?? 'N/A'),
               _buildInfoRow(context, true, "Phone Number:",
                   widget.studentModel.phoneNumber ?? 'N/A'),
-              _buildInfoRow(context, true, "Mother Number:",
+              _buildInfoRow(context, true, "Parent's Number:",
                   widget.studentModel.motherPhone ?? 'N/A'),
-              _buildInfoRow(context, true, "Father Number:",
-                  widget.studentModel.fatherPhone ?? 'N/A'),
+
               _buildInfoRow(
                   context, false, "Grade:", widget.studentModel.grade ?? 'N/A'),
               const SizedBox(height: 10),
@@ -390,14 +371,17 @@ class _StudentWidgetState extends State<StudentWidget> {
 
   Widget _buildStudentDaysList() {
     // Assuming `studentModel.hisGroups` is a list of Magmo3amodel
-    List<Map<String, dynamic>> daysWithTimes = widget.studentModel.hisGroups?.map((group) {
-      return {
-        'day': group.days, // Group days as a string (e.g., "Monday, Wednesday")
-        'time': group.time != null
-            ? {'hour': group.time?.hour, 'minute': group.time?.minute}
-            : null,
-      };
-    }).toList() ?? [];
+    List<Map<String, dynamic>> daysWithTimes =
+        widget.studentModel.hisGroups?.map((group) {
+              return {
+                'day': group
+                    .days, // Group days as a string (e.g., "Monday, Wednesday")
+                'time': group.time != null
+                    ? {'hour': group.time?.hour, 'minute': group.time?.minute}
+                    : null,
+              };
+            }).toList() ??
+            [];
 
     // Remove entries where day is null
     daysWithTimes.removeWhere((entry) => entry['day'] == null);
@@ -419,11 +403,14 @@ class _StudentWidgetState extends State<StudentWidget> {
               children: daysWithTimes.map((entry) {
                 String day = entry['day'] ?? '';
                 TimeOfDay? time = entry['time'] != null
-                    ? TimeOfDay(hour: entry['time']['hour'], minute: entry['time']['minute'])
+                    ? TimeOfDay(
+                        hour: entry['time']['hour'],
+                        minute: entry['time']['minute'])
                     : null;
 
                 // Convert TimeOfDay to 12-hour format with AM/PM
-                String timeString = time != null ? _formatTime12Hour(time) : 'No Time';
+                String timeString =
+                    time != null ? _formatTime12Hour(time) : 'No Time';
 
                 return Row(
                   children: [
@@ -458,6 +445,7 @@ class _StudentWidgetState extends State<StudentWidget> {
       ],
     );
   }
+
   // Method to build notes for the selected date
   Widget _buildNotesForDate(String dateKey) {
     if (widget.studentModel.notes == null ||

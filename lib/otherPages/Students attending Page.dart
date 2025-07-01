@@ -75,7 +75,7 @@ class _StudentsAttendingState extends State<StudentsAttending> {
               Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => Abssentpage(
+                  builder: (context) => AbsentPage(
                     selectedDay: widget.selectedDay,
                     magmo3aModel: widget.magmo3aModel,
                     selectedDateStr: widget.absenceModel.date,

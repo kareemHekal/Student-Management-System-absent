@@ -33,9 +33,7 @@ class normalstudentwiget extends StatelessWidget {
               _buildInfoRow(
                   context, "Phone Number:", studentModel?.phoneNumber ?? 'N/A'),
               _buildInfoRow(
-                  context, "Mother Number:", studentModel?.motherPhone ?? 'N/A'),
-              _buildInfoRow(
-                  context, "Father Number:", studentModel?.fatherPhone ?? 'N/A'),
+                  context, "Parent  Number:", studentModel?.motherPhone ?? 'N/A'),
               _buildInfoRow(context, "Grade:", studentModel?.grade ?? 'N/A'),
               const SizedBox(height: 10),
               _buildStudentDaysList(),
