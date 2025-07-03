@@ -99,8 +99,13 @@ class Firebasefunctions {
     }
   }
 
-  /// Updates an absence record by its date in the subcollection.
-  static Future<void> updateAbsenceByDateInSubcollection(String day, String magmo3aId, String absenceDate, AbsenceModel updatedAbsence) async {
+  /// Updates an absence record by its date in the subcollection with merge option.
+  static Future<void> updateAbsenceByDateInSubcollection(
+      String day,
+      String magmo3aId,
+      String absenceDate,
+      AbsenceModel updatedAbsence,
+      ) async {
     try {
       CollectionReference<Magmo3amodel> dayCollection = getDayCollection(day);
       DocumentReference<Magmo3amodel> magmo3aDocRef = dayCollection.doc(magmo3aId);
@@ -110,17 +115,26 @@ class Firebasefunctions {
         throw Exception("Group (Magmo3a) not found.");
       }
 
-      CollectionReference<AbsenceModel> absencesSubcollectionRef = magmo3aDocRef.collection('absences').withConverter<AbsenceModel>(
+      CollectionReference<AbsenceModel> absencesSubcollectionRef = magmo3aDocRef
+          .collection('absences')
+          .withConverter<AbsenceModel>(
         fromFirestore: (snapshot, _) => AbsenceModel.fromJson(snapshot.data()!),
         toFirestore: (value, _) => value.toJson(),
       );
 
       DocumentReference<AbsenceModel> absenceDocRef = absencesSubcollectionRef.doc(absenceDate);
-      await absenceDocRef.set(updatedAbsence);
+
+      // Use set with merge: true to update fields without overwriting entire document
+      await absenceDocRef.set(
+        updatedAbsence,
+        SetOptions(merge: true),
+      );
     } catch (e) {
       print("Error updating absence: $e");
+      rethrow; // Rethrow to allow caller to handle the error
     }
   }
+
 
   /// Fetches an absence record by its date.
   static Future<AbsenceModel?> getAbsenceByDate(String day, String groupId, String date) async {

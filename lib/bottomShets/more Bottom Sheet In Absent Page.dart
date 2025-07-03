@@ -319,7 +319,7 @@ class _CustomBottomSheetState extends State<CustomBottomSheet> {
                   },
                 ),
                 _buildIconButton(
-                  imagePath: "assets/icon/delete.png", // مسار صورة الإنهاء
+                  imagePath: "assets/icon/delete.png",
                   label: "Delete",
                   onPressed: () {
                     showDialog(

@@ -128,6 +128,11 @@ class Studentmodel {
         other.name == name &&
         other.grade == grade;
   }
+  @override
+  String toString() {
+    return 'Studentmodel(id: $id, name: $name, grade: $grade, phone: $phoneNumber)';
+  }
+
 
   @override
   int get hashCode => id.hashCode ^ name.hashCode ^ grade.hashCode;

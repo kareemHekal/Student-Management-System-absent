@@ -1,6 +1,5 @@
 import 'package:fatma_elorbany_absent/models/Magmo3amodel.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bottomShets/more Bottom Sheet In Absent Page.dart';
 import '../cards/StudentWidget.dart';
@@ -32,13 +31,31 @@ class AbsentPage extends StatelessWidget {
           selectedDateStr: selectedDateStr,
           selectedDay: selectedDay)
         ..handleIntent(FetchAbsence()),
-      child: BlocBuilder<AbsentCubit, AbsentState>(
+      child: BlocConsumer<AbsentCubit, AbsentState>(
+        listener: (context, state) {
+          if (state is AbsentError) {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                backgroundColor: Colors.red, content: Text(state.error)));
+          }
+          if (state is ScanSuccess) {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                backgroundColor: Colors.green,
+                content: Text("Scanned successfully")));
+          }
+          if (state is ScanError) {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                backgroundColor: Colors.red, content: Text(state.message)));
+          }
+        },
         builder: (context, state) {
           final cubit = context.read<AbsentCubit>();
           final selectedDate = DateTime.parse(cubit.selectedDateStr);
           final today = DateTime.now();
           final tomorrow = today.add(const Duration(days: 1));
 
+          if (state is AbsentLoading) {
+            return Scaffold(body: Center(child: CircularProgressIndicator()));
+          }
           return Scaffold(
             appBar: AppBar(
               leading: IconButton(
@@ -158,7 +175,8 @@ class AbsentPage extends StatelessWidget {
                             style: TextStyle(color: Colors.red, fontSize: 16)))
                     : Column(
                         children: [
-                          if (cubit.isAttendanceStarted == false &&
+                          if (cubit.isAttendanceStarted != true &&
+                              cubit.attendStudents.isEmpty &&
                               selectedDate.isBefore(tomorrow))
                             Padding(
                               padding: const EdgeInsets.all(8.0),
@@ -240,11 +258,6 @@ class AbsentPage extends StatelessWidget {
                                         },
                                       );
                                       if (confirm == true) {
-                                        await cubit
-                                            .updateStudentAttendanceAndAbsence(
-                                                cubit.magmo3aModel.grade ?? '',
-                                                student.id,
-                                                student);
                                         await cubit.handleIntent(
                                             AddStudentToPresent(
                                                 student: student,
