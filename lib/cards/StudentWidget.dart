@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher_string.dart';
 import '../../colors_app.dart';
 import '../../models/Studentmodel.dart';
 import '../Alertdialogs/Notify Absence.dart';
+import '../constatns.dart';
 import '../firbase/FirebaseFunctions.dart';
 import '../models/Magmo3amodel.dart';
 
@@ -53,22 +54,26 @@ class _StudentWidgetState extends State<StudentWidget> {
     // Determine the parent's role and customize the message
     if (parentRole == 'Parent') {
       genderSpecificMessage = """
-عزيزتي والدة ${widget.studentModel.name} أو والده ${widget.studentModel.name}،
+عزيزي ولي أمر ${widget.studentModel.name}،
 
-ابنك ${widget.studentModel.name} غائب اليوم عن حصة مس فاطمة العرباني.
+نود إعلامكم بأن ابنكم ${widget.studentModel.name} غائب اليوم عن حصة مس ${Constants.teacherName}.
 
-أطيب التحيات،
-فاطمة العرباني
-      """;
+مع أطيب التحيات،
+${Constants.teacherName}
+""";
     } else {
       genderSpecificMessage = """
 عزيزي ${widget.studentModel.name}،
 
-أنت غائب اليوم عن حصة مس فاطمة العرباني.
-      """;
+لقد تغيبت اليوم عن حصة مس ${Constants.teacherName}.
+
+مع أطيب التحيات،
+${Constants.teacherName}
+""";
     }
 
-    if (parentRole == 'mother') {
+
+    if (parentRole == 'Parent') {
       _sendWhatsAppMessage(
           widget.studentModel.motherPhone!, genderSpecificMessage);
     } else {
@@ -160,7 +165,7 @@ class _StudentWidgetState extends State<StudentWidget> {
                           content: SelectRecipientDialogContent(
 
                             sendMessageToMother: () =>
-                                _sendMessageToParent('mother'),
+                                _sendMessageToParent('Parent'),
                             sendMessageToStudent: () =>
                                 _sendMessageToParent('student'),
                           ),
