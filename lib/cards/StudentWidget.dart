@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher_string.dart';
 import '../../colors_app.dart';
 import '../../models/Studentmodel.dart';
 import '../Alertdialogs/Notify Absence.dart';
+import '../constants.dart';
 import '../firbase/FirebaseFunctions.dart';
 import '../models/Magmo3amodel.dart';
 
@@ -48,34 +49,48 @@ class _StudentWidgetState extends State<StudentWidget> {
   }
 
   void _sendMessageToParent(String parentRole) {
-    String genderSpecificMessage;
+    String message;
 
-    // Determine the parent's role and customize the message
-    if (parentRole == 'Parent') {
-      genderSpecificMessage = """
-عزيزتي والدة ${widget.studentModel.name} أو والده ${widget.studentModel.name}،
+    if (parentRole == 'father') {
+      message = """
+عزيزي والد الطالب ${widget.studentModel.name}،
 
-ابنك ${widget.studentModel.name} غائب اليوم عن حصة مس فاطمة العرباني.
+نود إعلامكم بأن ابنكم ${widget.studentModel.name} غائب اليوم عن حصة الأستاذة ${Constants.teacherName}.
 
-أطيب التحيات،
-فاطمة العرباني
-      """;
+مع خالص التحية،
+${Constants.teacherName}
+    """;
+    } else if (parentRole == 'mother') {
+      message = """
+عزيزتي والدة الطالب ${widget.studentModel.name}،
+
+نود إعلامكم بأن ابنكم ${widget.studentModel.name} غائب اليوم عن حصة الأستاذة ${Constants.teacherName}.
+
+مع خالص التحية،
+${Constants.teacherName}
+    """;
     } else {
-      genderSpecificMessage = """
-عزيزي ${widget.studentModel.name}،
+      message = """
+الطالب ${widget.studentModel.name}،
 
-أنت غائب اليوم عن حصة مس فاطمة العرباني.
-      """;
+لقد تغيبت اليوم عن حصة الأستاذة ${Constants.teacherName}.
+يرجى مراجعة الدروس الفائتة والالتزام بالحضور في المرات القادمة.
+
+مع التحية،
+${Constants.teacherName}
+    """;
     }
 
-    if (parentRole == 'mother') {
-      _sendWhatsAppMessage(
-          widget.studentModel.motherPhone!, genderSpecificMessage);
+    if (parentRole == 'father') {
+      _sendWhatsAppMessage(widget.studentModel.fatherPhone!, message);
+    } else if (parentRole == 'mother') {
+      _sendWhatsAppMessage(widget.studentModel.motherPhone!, message);
     } else {
-      _sendWhatsAppMessage(
-          widget.studentModel.phoneNumber!, genderSpecificMessage);
+      _sendWhatsAppMessage(widget.studentModel.phoneNumber!, message);
     }
+
   }
+
   Future<void> _sendWhatsAppMessage(String rawPhone, String message) async {
     final cleanedPhone = rawPhone.replaceAll('+', '').replaceAll(' ', '');
     final String formattedPhone = cleanedPhone.startsWith('0')
@@ -158,7 +173,8 @@ class _StudentWidgetState extends State<StudentWidget> {
                             style: TextStyle(color: app_colors.green),
                           ),
                           content: SelectRecipientDialogContent(
-
+                            sendMessageToFather: () =>
+                                _sendMessageToParent('father'),
                             sendMessageToMother: () =>
                                 _sendMessageToParent('mother'),
                             sendMessageToStudent: () =>
@@ -281,11 +297,12 @@ class _StudentWidgetState extends State<StudentWidget> {
               ),
               const SizedBox(height: 10),
               _buildInfoRow(
-                  context, false, "Name:", widget.studentModel.name ?? 'N/A'),
-              _buildInfoRow(context, true, "Phone Number:",
+                  context, false, "Name:", widget.studentModel.name ?? 'N/A'),_buildInfoRow(context, true, "Phone Number:",
                   widget.studentModel.phoneNumber ?? 'N/A'),
-              _buildInfoRow(context, true, "Parent's Number:",
+              _buildInfoRow(context, true, "Mother Number:",
                   widget.studentModel.motherPhone ?? 'N/A'),
+              _buildInfoRow(context, true, "Father Number:",
+                  widget.studentModel.fatherPhone ?? 'N/A'),
 
               _buildInfoRow(
                   context, false, "Grade:", widget.studentModel.grade ?? 'N/A'),
