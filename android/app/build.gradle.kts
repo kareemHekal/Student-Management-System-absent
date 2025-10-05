@@ -8,12 +8,14 @@ plugins {
 android {
     namespace = "com.example.fatma_elorbany_absent"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    ndkVersion = "27.0.12077973"
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
+
+
 
     kotlinOptions {
         jvmTarget = JavaVersion.VERSION_11.toString()
