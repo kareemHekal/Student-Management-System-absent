@@ -48,7 +48,6 @@ dependencies:
   pdf: ^3.11.1
   bloc: ^9.0.0
   flutter_bloc: ^9.0.0
-  audioplayers: ^6.5.0
   loader_overlay: ^4.0.4+1
 
 
@@ -86,7 +85,7 @@ flutter:
   assets:
     - assets/images/
     - assets/icon/
-    - assets/sounds/
+
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

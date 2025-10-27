@@ -10,9 +10,12 @@ class StartTakingAttendance extends AbsentIntent {}
 class AddStudentToPresent extends AbsentIntent {
   final Studentmodel student;
   final String realStudentId;
+  final BuildContext context;
+
 
   AddStudentToPresent({
     required this.student,
+    required this.context,
     required this.realStudentId,
   });
 }

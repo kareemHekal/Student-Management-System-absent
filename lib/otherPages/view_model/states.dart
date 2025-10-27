@@ -22,11 +22,6 @@ class ScanSuccess extends AbsentState {
   ScanSuccess(this.student);
 }
 
-class ScanError extends AbsentState {
-  final String message;
-
-  ScanError(this.message);
-}
 
 class SearchResultsUpdated extends AbsentState {
   final List<Studentmodel> filteredStudents;

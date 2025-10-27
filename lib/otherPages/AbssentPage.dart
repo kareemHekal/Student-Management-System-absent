@@ -37,15 +37,7 @@ class AbsentPage extends StatelessWidget {
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                 backgroundColor: Colors.red, content: Text(state.error)));
           }
-          if (state is ScanSuccess) {
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                backgroundColor: Colors.green,
-                content: Text("Scanned successfully")));
-          }
-          if (state is ScanError) {
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                backgroundColor: Colors.red, content: Text(state.message)));
-          }
+
         },
         builder: (context, state) {
           final cubit = context.read<AbsentCubit>();
@@ -260,6 +252,7 @@ class AbsentPage extends StatelessWidget {
                                       if (confirm == true) {
                                         await cubit.handleIntent(
                                             AddStudentToPresent(
+                                              context: context,
                                                 student: student,
                                                 realStudentId: student.id));
                                       }

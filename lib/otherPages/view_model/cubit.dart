@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:ai_barcode_scanner/ai_barcode_scanner.dart';
-import 'package:audioplayers/audioplayers.dart';
 import 'package:bloc/bloc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fatma_elorbany_absent/firbase/FirebaseFunctions.dart';
@@ -23,7 +22,6 @@ class AbsentCubit extends Cubit<AbsentState> {
     required this.selectedDay,
   }) : super(AbsentInitial());
 
-  final AudioPlayer _audioPlayer = AudioPlayer();
   final searchController = TextEditingController();
 
   List<Studentmodel> studentsList = [];
@@ -37,7 +35,6 @@ class AbsentCubit extends Cubit<AbsentState> {
   late String? lastTimeDate;
   late String? lastTimeDay;
 
-  final ValueNotifier<bool> _controller = ValueNotifier(false);
 
   StreamSubscription<QuerySnapshot<Studentmodel>>? _studentsSubscription;
 
@@ -51,7 +48,7 @@ class AbsentCubit extends Cubit<AbsentState> {
         _startTakingAbsence();
         break;
       case AddStudentToPresent():
-        await _addStudentToPresent(intent.student, intent.realStudentId);
+        await _addStudentToPresent(intent.student, intent.realStudentId, intent.context);
         break;
 
       case ScanQrIntent():
@@ -144,57 +141,79 @@ class AbsentCubit extends Cubit<AbsentState> {
   }
 
   Future<void> _addStudentToPresent(
-      Studentmodel student, String realStudentId) async {
+      Studentmodel student,
+      String realStudentId,
+      BuildContext context,
+      ) async {
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+
     // 1. Check if already present
     if (attendStudents.any((s) => s.id == student.id)) {
-      await _playErrorSound();
-      emit(AbsentError("This student is already in the attendance list."));
+      scaffoldMessenger.clearSnackBars();
+      scaffoldMessenger.showSnackBar(
+        SnackBar(
+          content: Text('⚠️ ${student.name} تم تسجيل حضوره من قبل.'),
+          backgroundColor: Colors.orange,
+          duration: const Duration(milliseconds: 900),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
       return;
     }
 
-    // 2. Update in-memory lists (create new lists to trigger UI updates)
-
-    // 2. Update in-memory lists (create new lists to trigger UI updates)
+    // 2. Update in-memory lists
     attendStudents = attendStudents..add(student);
-
-    // Ensure that the student is removed from the absentee list after attending
     studentsList = studentsList..removeWhere((s) => s.id == student.id);
-    print(studentsList.toString());
-
     filteredStudentsList = studentsList;
-    print(filteredStudentsList.toString());
 
-    // 3. Emit state immediately so UI updates fast
     emit(AbsenceFetched());
 
-    // 4. Prepare absence model with updated lists
+    // 3. Prepare absence model
     final absenceModel = AbsenceModel(
       attendStudents: attendStudents,
       date: selectedDateStr,
       numberOfStudents: numberofstudents,
       absentStudents: studentsList,
     );
-    await updateStudentAttendance(student, realStudentId);
 
     try {
-      // 5. Update Firestore with merge option to avoid overwriting other fields
+      // 4. Update Firestore
+      await updateStudentAttendance(student, realStudentId);
       await Firebasefunctions.updateAbsenceByDateInSubcollection(
         selectedDay,
         magmo3aModel.id,
         selectedDateStr,
         absenceModel,
       );
+
+      // 5. Success feedback
+      scaffoldMessenger.clearSnackBars();
+      scaffoldMessenger.showSnackBar(
+        SnackBar(
+          content: Text('✅ تم تسجيل حضور ${student.name} بنجاح!'),
+          backgroundColor: Colors.green,
+          duration: const Duration(milliseconds: 800),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
     } catch (e) {
-      // 6. Handle Firestore errors gracefully
-      emit(AbsentError("Failed to update attendance in database: $e"));
+      // 6. Firestore error handling
+      scaffoldMessenger.clearSnackBars();
+      scaffoldMessenger.showSnackBar(
+        SnackBar(
+          content: Text('❌ فشل في تحديث الحضور: $e'),
+          backgroundColor: Colors.red,
+          duration: const Duration(milliseconds: 1000),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
     }
 
     // 7. Mark attendance started
     isAttendanceStarted = true;
-    _playCorrectSound();
-    print("✅ Playing correct sound for ${student.name}");
     emit(ScanSuccess(student));
   }
+
 
   Future<void> updateStudentAttendance(
       Studentmodel student, String studentId) async {
@@ -215,6 +234,7 @@ class AbsentCubit extends Cubit<AbsentState> {
   }
 
   Future<void> _scanQrcode(BuildContext context) async {
+    ScaffoldMessengerState scaffoldMessenger = ScaffoldMessenger.of(context);
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => BlocProvider.value(
@@ -229,25 +249,34 @@ class AbsentCubit extends Cubit<AbsentState> {
             ),
             onDetect: (BarcodeCapture capture) async {
               final String? scannedValue = capture.barcodes.first.rawValue;
+              if (scannedValue == null) return;
 
-              if (scannedValue != null) {
-                final student = await Firebasefunctions.getStudentById(
-                  magmo3aModel.grade ?? "",
-                  scannedValue,
+
+              // ✅ Instantly remove any previous snackbar
+              scaffoldMessenger.clearSnackBars();
+
+              final student = await Firebasefunctions.getStudentById(
+                magmo3aModel.grade ?? "",
+                scannedValue,
+              );
+
+              if (student != null &&
+                  student.hisGroupsId?.contains(magmo3aModel.id) == true) {
+                await _addStudentToPresent(student, scannedValue,context);
+              } else {
+
+                final msg = student == null
+                    ? "Student not found!"
+                    : "Student is not part of this group!";
+
+                scaffoldMessenger.showSnackBar(
+                  SnackBar(
+                    content: Text(msg),
+                    backgroundColor: Colors.red,
+                    duration: const Duration(milliseconds: 800),
+                    behavior: SnackBarBehavior.floating,
+                  ),
                 );
-
-                if (student != null &&
-                    student.hisGroupsId?.contains(magmo3aModel.id) == true) {
-                  await _addStudentToPresent(student, scannedValue);
-                } else {
-                  _playErrorSound();
-                  if (!isClosed)
-                    emit(ScanError(
-                      student == null
-                          ? "Student not found!"
-                          : "Student is not part of this group!",
-                    ));
-                }
               }
             },
           ),
@@ -271,15 +300,6 @@ class AbsentCubit extends Cubit<AbsentState> {
     ));
   }
 
-  Future<void> _playCorrectSound() async {
-    await _audioPlayer.play(AssetSource('sounds/correct.mp3'));
-  }
-
-  Future<void> _playErrorSound() async {
-    await _audioPlayer.play(AssetSource(
-      'sounds/error.mp3',
-    ));
-  }
 
   @override
   Future<void> close() {
