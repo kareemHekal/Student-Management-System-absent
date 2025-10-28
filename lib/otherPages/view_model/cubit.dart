@@ -266,8 +266,8 @@ class AbsentCubit extends Cubit<AbsentState> {
               } else {
 
                 final msg = student == null
-                    ? "Student not found!"
-                    : "Student is not part of this group!";
+                    ? "لم يتم العثور على الطالب!"
+                    : "الطالب ليس ضمن هذه المجموعة!";
 
                 scaffoldMessenger.showSnackBar(
                   SnackBar(
