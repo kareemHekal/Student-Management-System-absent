@@ -303,7 +303,7 @@ class AbsentCubit extends Cubit<AbsentState> {
 
   @override
   Future<void> close() {
-    _studentsSubscription?.cancel(); // مهم جداً
+    _studentsSubscription?.cancel();
     return super.close();
   }
 }
