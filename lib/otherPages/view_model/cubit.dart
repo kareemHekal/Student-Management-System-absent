@@ -2,13 +2,13 @@ import 'dart:async';
 import 'package:ai_barcode_scanner/ai_barcode_scanner.dart';
 import 'package:bloc/bloc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:fatma_elorbany_absent/firbase/FirebaseFunctions.dart';
-import 'package:fatma_elorbany_absent/models/Magmo3amodel.dart';
-import 'package:fatma_elorbany_absent/models/Studentmodel.dart';
-import 'package:fatma_elorbany_absent/models/absence_model.dart';
-import 'package:fatma_elorbany_absent/models/day_record.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../firbase/FirebaseFunctions.dart';
+import '../../models/Magmo3amodel.dart';
+import '../../models/Studentmodel.dart';
+import '../../models/absence_model.dart';
+import '../../models/day_record.dart';
 import 'intent.dart';
 import 'states.dart';
 

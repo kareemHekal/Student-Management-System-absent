@@ -1,4 +1,4 @@
-name: fatma_elorbany_absent
+name: student_management_absent
 description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
@@ -49,7 +49,7 @@ dependencies:
   bloc: ^9.0.0
   flutter_bloc: ^9.0.0
   loader_overlay: ^4.0.4+1
-
+  rename_app: ^1.6.5
 
 dev_dependencies:
   flutter_test:

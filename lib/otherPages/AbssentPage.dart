@@ -1,4 +1,3 @@
-import 'package:fatma_elorbany_absent/models/Magmo3amodel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bottomShets/more Bottom Sheet In Absent Page.dart';
@@ -6,6 +5,7 @@ import '../cards/StudentWidget.dart';
 import '../colors_app.dart';
 import '../firbase/FirebaseFunctions.dart';
 import '../homeScreen.dart';
+import '../models/Magmo3amodel.dart';
 import '../models/absence_model.dart';
 import 'view_model/cubit.dart';
 import 'view_model/intent.dart';

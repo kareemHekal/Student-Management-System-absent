@@ -1,5 +1,5 @@
-import 'package:fatma_elorbany_absent/models/Studentmodel.dart';
 import 'package:flutter/material.dart';
+import '../../models/Studentmodel.dart';
 
 sealed class AbsentIntent {}
 

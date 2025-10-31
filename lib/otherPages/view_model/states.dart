@@ -1,4 +1,5 @@
-import 'package:fatma_elorbany_absent/models/Studentmodel.dart';
+
+import '../../models/Studentmodel.dart';
 
 sealed class AbsentState {}
 
