@@ -5,7 +5,8 @@ import '../colors_app.dart';
 import '../firbase/FirebaseFunctions.dart';
 import '../models/Magmo3amodel.dart';
 import '../models/Studentmodel.dart';
-import '../models/absancemodel.dart';
+import '../models/absence_model.dart';
+import '../models/day_record.dart';
 import 'AbssentPage.dart';
 
 class StudentsAttending extends StatefulWidget {
@@ -237,16 +238,17 @@ class _StudentsAttendingState extends State<StudentsAttending> {
                                                       s.id == student.id);
 
                                               // Update the student's days counters
-                                              student.numberOfAbsentDays =
-                                                  (student.numberOfAbsentDays ??
-                                                          0) +
-                                                      1;
-                                              student.numberOfAttendantDays =
-                                                  ((student.numberOfAttendantDays ??
-                                                              0) -
-                                                          1)
-                                                      .clamp(0, double.infinity)
-                                                      .toInt();
+
+
+                                              student.countingAbsentDays ??= [];
+                                              student.countingAbsentDays!.add(
+                                                DayRecord(date: widget.absenceModel.date, day: widget.selectedDay),
+                                              );
+
+                                              student.countingAttendedDays ??= [];
+                                              student.countingAttendedDays!.remove(
+                                                DayRecord(date: widget.absenceModel.date, day: widget.selectedDay),
+                                              );
 
                                               // Update the student in the Firestore collection
                                               Firebasefunctions

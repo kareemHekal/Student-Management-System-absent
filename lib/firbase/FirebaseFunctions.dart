@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/Magmo3amodel.dart';
 import '../models/Studentmodel.dart';
-import '../models/absancemodel.dart';
+import '../models/absence_model.dart';
 
 class Firebasefunctions {
   // =======================================================================

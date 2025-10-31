@@ -6,7 +6,7 @@ import '../cards/StudentWidget.dart';
 import '../colors_app.dart';
 import '../firbase/FirebaseFunctions.dart';
 import '../homeScreen.dart';
-import '../models/absancemodel.dart';
+import '../models/absence_model.dart';
 import 'view_model/cubit.dart';
 import 'view_model/intent.dart';
 import 'view_model/states.dart';

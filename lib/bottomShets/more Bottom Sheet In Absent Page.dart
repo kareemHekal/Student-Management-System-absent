@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import '../Alertdialogs/Delete Absence.dart';
 import '../colors_app.dart';
 import '../firbase/FirebaseFunctions.dart';
@@ -9,9 +8,9 @@ import '../models/Studentmodel.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
-import '../models/absancemodel.dart';
+import '../models/absence_model.dart';
+import '../models/day_record.dart';
 import '../otherPages/Students attending Page.dart';
-import '../otherPages/view_model/cubit.dart';
 
 class CustomBottomSheet extends StatefulWidget {
   List<Studentmodel> filteredStudentsList = [];
@@ -227,17 +226,17 @@ class _CustomBottomSheetState extends State<CustomBottomSheet> {
     );
   }
 
-
+   /// delete
   Future<void> fixAttendanceCounts() async {
 
     try {
       // ✅ 1. Update absent students (subtract 1 from numberOfAbsentDays)
       for (var student in widget.absenceModel.absentStudents) {
-        if (student.numberOfAbsentDays != null && student.numberOfAbsentDays! > 0) {
-          student.numberOfAbsentDays = student.numberOfAbsentDays! - 1;
-        } else {
-          student.numberOfAbsentDays = 0;
-        }
+
+        student.countingAbsentDays ??= [];
+        student.countingAbsentDays!.remove(
+          DayRecord(date: widget.absenceModel.date, day: widget.selectedDay),
+        );
 
         await Firebasefunctions.updateStudentInCollection(
           widget.magmo3aModel.grade ?? "",
@@ -248,11 +247,10 @@ class _CustomBottomSheetState extends State<CustomBottomSheet> {
 
       // ✅ 2. Update attended students (subtract 1 from numberOfAttendantDays)
       for (var student in widget.absenceModel.attendStudents) {
-        if (student.numberOfAttendantDays != null && student.numberOfAttendantDays! > 0) {
-          student.numberOfAttendantDays = student.numberOfAttendantDays! - 1;
-        } else {
-          student.numberOfAttendantDays = 0;
-        }
+        student.countingAttendedDays ??= [];
+        student.countingAttendedDays!.remove(
+          DayRecord(date: widget.absenceModel.date, day: widget.selectedDay),
+        );
 
         await Firebasefunctions.updateStudentInCollection(
           widget.magmo3aModel.grade ?? "",

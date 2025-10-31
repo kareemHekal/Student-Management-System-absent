@@ -5,7 +5,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fatma_elorbany_absent/firbase/FirebaseFunctions.dart';
 import 'package:fatma_elorbany_absent/models/Magmo3amodel.dart';
 import 'package:fatma_elorbany_absent/models/Studentmodel.dart';
-import 'package:fatma_elorbany_absent/models/absancemodel.dart';
+import 'package:fatma_elorbany_absent/models/absence_model.dart';
+import 'package:fatma_elorbany_absent/models/day_record.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'intent.dart';
@@ -35,7 +36,6 @@ class AbsentCubit extends Cubit<AbsentState> {
   late String? lastTimeDate;
   late String? lastTimeDay;
 
-
   StreamSubscription<QuerySnapshot<Studentmodel>>? _studentsSubscription;
 
   Future<void> handleIntent(AbsentIntent intent) async {
@@ -48,7 +48,8 @@ class AbsentCubit extends Cubit<AbsentState> {
         _startTakingAbsence();
         break;
       case AddStudentToPresent():
-        await _addStudentToPresent(intent.student, intent.realStudentId, intent.context);
+        await _addStudentToPresent(
+            intent.student, intent.realStudentId, intent.context);
         break;
 
       case ScanQrIntent():
@@ -113,7 +114,10 @@ class AbsentCubit extends Cubit<AbsentState> {
     emit(AbsentLoading());
 
     for (var student in studentsList) {
-      student.numberOfAbsentDays = (student.numberOfAbsentDays ?? 0) + 1;
+      student.countingAbsentDays ??= [];
+      student.countingAbsentDays!.add(
+        DayRecord(date: selectedDateStr, day: selectedDay),
+      );
 
       await Firebasefunctions.updateStudentInCollection(
         student.grade ?? "",
@@ -141,10 +145,10 @@ class AbsentCubit extends Cubit<AbsentState> {
   }
 
   Future<void> _addStudentToPresent(
-      Studentmodel student,
-      String realStudentId,
-      BuildContext context,
-      ) async {
+    Studentmodel student,
+    String realStudentId,
+    BuildContext context,
+  ) async {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
 
     // 1. Check if already present
@@ -214,18 +218,20 @@ class AbsentCubit extends Cubit<AbsentState> {
     emit(ScanSuccess(student));
   }
 
-
   Future<void> updateStudentAttendance(
       Studentmodel student, String studentId) async {
-    // Update local fields
-    student.numberOfAttendantDays = (student.numberOfAttendantDays ?? 0) + 1;
-    student.numberOfAbsentDays = ((student.numberOfAbsentDays ?? 0) - 1)
-        .clamp(0, double.infinity)
-        .toInt();
-    student.lastDayStudentCame = selectedDay;
-    student.lastDateStudentCame = selectedDateStr;
 
-    // Update Firestore
+    student.countingAttendedDays ??= [];
+    student.countingAttendedDays!.add(
+      DayRecord(date: selectedDateStr, day: selectedDay),
+    );
+
+
+     student.countingAbsentDays ??= [];
+    student.countingAbsentDays!.remove(
+      DayRecord(date: selectedDateStr, day: selectedDay),
+    );
+
     await Firebasefunctions.updateStudentInCollection(
       magmo3aModel.grade ?? "",
       studentId,
@@ -251,7 +257,6 @@ class AbsentCubit extends Cubit<AbsentState> {
               final String? scannedValue = capture.barcodes.first.rawValue;
               if (scannedValue == null) return;
 
-
               // ✅ Instantly remove any previous snackbar
               scaffoldMessenger.clearSnackBars();
 
@@ -262,9 +267,8 @@ class AbsentCubit extends Cubit<AbsentState> {
 
               if (student != null &&
                   student.hisGroupsId?.contains(magmo3aModel.id) == true) {
-                await _addStudentToPresent(student, scannedValue,context);
+                await _addStudentToPresent(student, scannedValue, context);
               } else {
-
                 final msg = student == null
                     ? "لم يتم العثور على الطالب!"
                     : "الطالب ليس ضمن هذه المجموعة!";
@@ -299,7 +303,6 @@ class AbsentCubit extends Cubit<AbsentState> {
       filteredStudentsList,
     ));
   }
-
 
   @override
   Future<void> close() {

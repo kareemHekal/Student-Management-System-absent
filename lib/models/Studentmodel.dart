@@ -1,4 +1,5 @@
 import 'Magmo3amodel.dart';
+import 'day_record.dart';
 
 class Studentmodel {
   String id;
@@ -12,18 +13,9 @@ class Studentmodel {
   List<Magmo3amodel>? hisGroups;
   List<String>? hisGroupsId;
   String? note;
+  List<DayRecord>? countingAttendedDays;
+  List<DayRecord>? countingAbsentDays;
   String? dateofadd;
-  int? numberOfAbsentDays;
-  int? numberOfAttendantDays;
-  String? lastDayStudentCame;
-  String? lastDateStudentCame;
-  String? dateOfFirstMonthPaid;
-  String? dateOfSecondMonthPaid;
-  String? dateOfThirdMonthPaid;
-  String? dateOfFourthMonthPaid;
-  String? dateOfFifthMonthPaid;
-  String? dateOfExplainingNotePaid;
-  String? dateOfReviewingNotePaid;
 
   Studentmodel({
     this.id = "",
@@ -37,18 +29,9 @@ class Studentmodel {
     this.hisGroups,
     this.hisGroupsId,
     this.note,
+    this.countingAttendedDays,
+    this.countingAbsentDays,
     this.dateofadd,
-    this.numberOfAbsentDays,
-    this.numberOfAttendantDays,
-    this.lastDayStudentCame,
-    this.lastDateStudentCame,
-    this.dateOfFirstMonthPaid,
-    this.dateOfSecondMonthPaid,
-    this.dateOfThirdMonthPaid,
-    this.dateOfFourthMonthPaid,
-    this.dateOfFifthMonthPaid,
-    this.dateOfExplainingNotePaid,
-    this.dateOfReviewingNotePaid,
   });
 
   factory Studentmodel.fromJson(Map<String, dynamic> json) {
@@ -63,28 +46,26 @@ class Studentmodel {
       note: json['note'],
       dateofadd: json['dateofadd'],
       notes: json["notes"] != null
-          ? List<Map<String, String>>.from(json["notes"].map((note) => Map<String, String>.from(note)))
+          ? List<Map<String, String>>.from(
+          json["notes"].map((note) => Map<String, String>.from(note)))
           : [],
-
       hisGroups: json["hisGroups"] != null
-          ? List<Magmo3amodel>.from(json["hisGroups"].map((group) => Magmo3amodel.fromJson(group)))
+          ? List<Magmo3amodel>.from(
+          json["hisGroups"].map((group) => Magmo3amodel.fromJson(group)))
           : [],
-
       hisGroupsId: json["hisGroupsId"] != null
           ? List<String>.from(json["hisGroupsId"])
           : [],
-
-      numberOfAbsentDays: json['numberOfAbsentDays'] ?? 0,
-      numberOfAttendantDays: json['numberOfAttendantDays'] ?? 0,
-      lastDayStudentCame: json['lastDayStudentCame'],
-      lastDateStudentCame: json['lastDateStudentCame'],
-      dateOfFirstMonthPaid: json['dateOfFirstMonthPaid'],
-      dateOfSecondMonthPaid: json['dateOfSecondMonthPaid'],
-      dateOfThirdMonthPaid: json['dateOfThirdMonthPaid'],
-      dateOfFourthMonthPaid: json['dateOfFourthMonthPaid'],
-      dateOfFifthMonthPaid: json['dateOfFifthMonthPaid'],
-      dateOfExplainingNotePaid: json['dateOfExplainingNotePaid'],
-      dateOfReviewingNotePaid: json['dateOfReviewingNotePaid'],
+      countingAttendedDays: json["countingAttendedDays"] != null
+          ? List<DayRecord>.from(
+          json["countingAttendedDays"]
+              .map((day) => DayRecord.fromJson(day)))
+          : [],
+      countingAbsentDays: json["countingAbsentDays"] != null
+          ? List<DayRecord>.from(
+          json["countingAbsentDays"]
+              .map((day) => DayRecord.fromJson(day)))
+          : [],
     );
   }
 
@@ -101,20 +82,19 @@ class Studentmodel {
       'dateofadd': dateofadd,
       'notes': notes,
       'hisGroups': hisGroups != null
-          ? List<Map<String, dynamic>>.from(hisGroups!.map((group) => group.toJson()))
+          ? List<Map<String, dynamic>>.from(
+          hisGroups!.map((group) => group.toJson()))
           : [],
       'hisGroupsId': hisGroupsId,
-      'numberOfAbsentDays': numberOfAbsentDays,
-      'numberOfAttendantDays': numberOfAttendantDays,
-      'lastDateStudentCame': lastDateStudentCame,
-      'lastDayStudentCame': lastDayStudentCame,
-      'dateOfFirstMonthPaid': dateOfFirstMonthPaid,
-      'dateOfSecondMonthPaid': dateOfSecondMonthPaid,
-      'dateOfThirdMonthPaid': dateOfThirdMonthPaid,
-      'dateOfFourthMonthPaid': dateOfFourthMonthPaid,
-      'dateOfFifthMonthPaid': dateOfFifthMonthPaid,
-      'dateOfExplainingNotePaid': dateOfExplainingNotePaid,
-      'dateOfReviewingNotePaid': dateOfReviewingNotePaid,
+
+      'countingAttendedDays': countingAttendedDays != null
+          ? List<Map<String, dynamic>>.from(
+          countingAttendedDays!.map((day) => day.toJson()))
+          : [],
+      'countingAbsentDays': countingAbsentDays != null
+          ? List<Map<String, dynamic>>.from(
+          countingAbsentDays!.map((day) => day.toJson()))
+          : [],
     };
   }
 
@@ -128,11 +108,11 @@ class Studentmodel {
         other.name == name &&
         other.grade == grade;
   }
+
   @override
   String toString() {
     return 'Studentmodel(id: $id, name: $name, grade: $grade, phone: $phoneNumber)';
   }
-
 
   @override
   int get hashCode => id.hashCode ^ name.hashCode ^ grade.hashCode;
