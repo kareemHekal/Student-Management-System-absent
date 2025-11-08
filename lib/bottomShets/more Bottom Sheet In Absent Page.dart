@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import '../Alertdialogs/Delete Absence.dart';
 import '../colors_app.dart';
 import '../firbase/FirebaseFunctions.dart';
+import '../homeScreen.dart';
+import '../loading_alert/run_with_loading.dart';
 import '../models/Magmo3amodel.dart';
 import '../models/Studentmodel.dart';
 import 'package:pdf/pdf.dart';
@@ -228,40 +230,52 @@ class _CustomBottomSheetState extends State<CustomBottomSheet> {
 
    /// delete
   Future<void> fixAttendanceCounts() async {
+    runWithLoading(context, () async {
+      try {
+        // ✅ 1. Update absent students (subtract 1 from numberOfAbsentDays)
+        for (var student in widget.absenceModel.absentStudents) {
 
-    try {
-      // ✅ 1. Update absent students (subtract 1 from numberOfAbsentDays)
-      for (var student in widget.absenceModel.absentStudents) {
+          student.countingAbsentDays ??= [];
 
-        student.countingAbsentDays ??= [];
-        student.countingAbsentDays!.remove(
-          DayRecord(date: widget.absenceModel.date, day: widget.selectedDay),
+          student.countingAbsentDays!.removeWhere((dayRecord) =>
+          dayRecord.date == widget.absenceModel.date &&
+              dayRecord.day == widget.selectedDay);
+
+
+          await Firebasefunctions.updateStudentInCollection(
+            widget.magmo3aModel.grade ?? "",
+            student.id,
+            student,
+          );
+
+        }
+
+        // ✅ 2. Update attended students (subtract 1 from numberOfAttendantDays)
+        for (var student in widget.absenceModel.attendStudents) {
+          student.countingAttendedDays ??= [];
+          student.countingAttendedDays!.remove(
+            DayRecord(date: widget.absenceModel.date, day: widget.selectedDay),
+          );
+
+          await Firebasefunctions.updateStudentInCollection(
+            widget.magmo3aModel.grade ?? "",
+            student.id,
+            student,
+          );
+        }
+
+        // Navigate to HomeScreen and show SnackBar after deletion
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => Homescreen()),
+              (route) => false, // Removes all previous routes
         );
 
-        await Firebasefunctions.updateStudentInCollection(
-          widget.magmo3aModel.grade ?? "",
-          student.id,
-          student,
-        );
+      } catch (e) {
+        print("$e ⛔⛔⛔");
       }
+    });
 
-      // ✅ 2. Update attended students (subtract 1 from numberOfAttendantDays)
-      for (var student in widget.absenceModel.attendStudents) {
-        student.countingAttendedDays ??= [];
-        student.countingAttendedDays!.remove(
-          DayRecord(date: widget.absenceModel.date, day: widget.selectedDay),
-        );
-
-        await Firebasefunctions.updateStudentInCollection(
-          widget.magmo3aModel.grade ?? "",
-          student.id,
-          student,
-        );
-      }
-
-    } catch (e) {
-      print("$e ⛔⛔⛔");
-    }
   }
 
   @override
@@ -344,7 +358,7 @@ class _CustomBottomSheetState extends State<CustomBottomSheet> {
                 _buildIconButton(
                   imagePath: "assets/icon/delete.png",
                   label: "Delete",
-                  onPressed: () {
+                  onPressed: ()  {
                     showDialog(
                       context: context,
                       builder: (context) => AlertDialog(
@@ -352,9 +366,8 @@ class _CustomBottomSheetState extends State<CustomBottomSheet> {
                         title: const Text("Delete Absence",
                             style: TextStyle(color: app_colors.orange)),
                         content: DeleteConfirmationDialogContent(
-                          onConfirm: () {
-                            fixAttendanceCounts();
-                            Firebasefunctions.deleteAbsenceFromSubcollection(
+                          onConfirm: () async{
+                           await Firebasefunctions.deleteAbsenceFromSubcollection(
                               widget.selectedDay,
                               widget.magmo3aModel.id,
                               widget.absenceModel.date,
@@ -366,6 +379,8 @@ class _CustomBottomSheetState extends State<CustomBottomSheet> {
                                     Text('Error deleting absence: $error')),
                               );
                             });
+                           await fixAttendanceCounts();
+
                           },
                         ),
                       ),

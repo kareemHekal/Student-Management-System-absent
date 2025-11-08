@@ -1,7 +1,5 @@
 import 'dart:async';
 import 'package:ai_barcode_scanner/ai_barcode_scanner.dart';
-import 'package:bloc/bloc.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../firbase/FirebaseFunctions.dart';
@@ -33,37 +31,39 @@ class AbsentCubit extends Cubit<AbsentState> {
   int? numberofstudents;
 
   late bool isStudentInList;
-  late String? lastTimeDate;
-  late String? lastTimeDay;
 
-  StreamSubscription<QuerySnapshot<Studentmodel>>? _studentsSubscription;
-
+  // ------------------- HANDLE INTENT -------------------
   Future<void> handleIntent(AbsentIntent intent) async {
-    switch (intent) {
-      case FetchAbsence():
+    switch (intent.runtimeType) {
+      case FetchAbsence:
         await _fetchAbsence();
         break;
 
-      case StartTakingAttendance():
-        _startTakingAbsence();
-        break;
-      case AddStudentToPresent():
-        await _addStudentToPresent(
-            intent.student, intent.realStudentId, intent.context);
+      case StartTakingAttendance:
+        await _startTakingAbsence();
         break;
 
-      case ScanQrIntent():
-        await _scanQrcode(intent.context);
+      case AddStudentToPresent:
+        final i = intent as AddStudentToPresent;
+        await _addStudentToPresent(i.student, i.realStudentId, i.context);
         break;
 
-      case SearchStudent():
-        _searchStudent(intent.query);
+      case ScanQrIntent:
+        final i = intent as ScanQrIntent;
+        await _scanQrcode(i.context);
+        break;
+
+      case SearchStudent:
+        final i = intent as SearchStudent;
+        _searchStudent(i.query);
         break;
     }
   }
 
+  // ------------------- FETCH ABSENCE -------------------
   Future<void> _fetchAbsence() async {
     emit(AbsentLoading());
+
     try {
       final absentRecord = await Firebasefunctions.getAbsenceByDate(
         selectedDay,
@@ -86,45 +86,41 @@ class AbsentCubit extends Cubit<AbsentState> {
     }
   }
 
+  // ------------------- FETCH STUDENTS LIST -------------------
   Future<void> _fetchStudentsList() async {
     emit(AbsentLoading());
     try {
-      final snapshotStream = Firebasefunctions.getStudentsByGroupId(
+      final snapshot = await Firebasefunctions.getStudentsByGroupIdOnce(
         magmo3aModel.grade ?? "",
         magmo3aModel.id,
       );
 
-      _studentsSubscription = snapshotStream.listen((snapshot) {
-        if (isClosed) return;
+      studentsList = snapshot.docs.map((doc) => doc.data()).toList();
+      filteredStudentsList = studentsList;
+      numberofstudents = studentsList.length;
+      isAttendanceStarted = false;
+      emit(AbsenceFetched());
 
-        studentsList = snapshot.docs.map((doc) => doc.data()).toList();
-        filteredStudentsList = studentsList;
-        if (isAttendanceStarted != true) {
-          isAttendanceStarted = false;
-          emit(AbsenceFetched());
-        }
-      });
+      emit(AbsenceFetched());
     } catch (e) {
       emit(AbsentError("Error fetching students: $e"));
     }
   }
 
-  void _startTakingAbsence() async {
-    _studentsSubscription?.cancel();
+  // ------------------- START ATTENDANCE -------------------
+  Future<void> _startTakingAbsence() async {
     emit(AbsentLoading());
 
     for (var student in studentsList) {
       student.countingAbsentDays ??= [];
-      student.countingAbsentDays!.add(
-        DayRecord(date: selectedDateStr, day: selectedDay),
-      );
-
+      student.countingAbsentDays!.add(DayRecord(date: selectedDateStr, day: selectedDay));
       await Firebasefunctions.updateStudentInCollection(
         student.grade ?? "",
         student.id,
         student,
       );
     }
+
     isAttendanceStarted = true;
 
     final absenceModel = AbsenceModel(
@@ -144,35 +140,28 @@ class AbsentCubit extends Cubit<AbsentState> {
     emit(AttendanceStarted());
   }
 
-  Future<void> _addStudentToPresent(
-    Studentmodel student,
-    String realStudentId,
-    BuildContext context,
-  ) async {
+  // ------------------- ADD STUDENT TO PRESENT -------------------
+  Future<void> _addStudentToPresent(Studentmodel student, String realStudentId, BuildContext context) async {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
 
-    // 1. Check if already present
     if (attendStudents.any((s) => s.id == student.id)) {
       scaffoldMessenger.clearSnackBars();
       scaffoldMessenger.showSnackBar(
-        SnackBar(
-          content: Text('⚠️ ${student.name} تم تسجيل حضوره من قبل.'),
+        const SnackBar(
+          content: Text('⚠️ تم تسجيل حضوره من قبل.'),
           backgroundColor: Colors.orange,
-          duration: const Duration(milliseconds: 900),
+          duration: Duration(milliseconds: 900),
           behavior: SnackBarBehavior.floating,
         ),
       );
       return;
     }
 
-    // 2. Update in-memory lists
-    attendStudents = attendStudents..add(student);
-    studentsList = studentsList..removeWhere((s) => s.id == student.id);
+    attendStudents.add(student);
+    studentsList.removeWhere((s) => s.id == student.id);
     filteredStudentsList = studentsList;
-
     emit(AbsenceFetched());
 
-    // 3. Prepare absence model
     final absenceModel = AbsenceModel(
       attendStudents: attendStudents,
       date: selectedDateStr,
@@ -181,7 +170,6 @@ class AbsentCubit extends Cubit<AbsentState> {
     );
 
     try {
-      // 4. Update Firestore
       await updateStudentAttendance(student, realStudentId);
       await Firebasefunctions.updateAbsenceByDateInSubcollection(
         selectedDay,
@@ -190,7 +178,6 @@ class AbsentCubit extends Cubit<AbsentState> {
         absenceModel,
       );
 
-      // 5. Success feedback
       scaffoldMessenger.clearSnackBars();
       scaffoldMessenger.showSnackBar(
         SnackBar(
@@ -201,7 +188,6 @@ class AbsentCubit extends Cubit<AbsentState> {
         ),
       );
     } catch (e) {
-      // 6. Firestore error handling
       scaffoldMessenger.clearSnackBars();
       scaffoldMessenger.showSnackBar(
         SnackBar(
@@ -213,24 +199,17 @@ class AbsentCubit extends Cubit<AbsentState> {
       );
     }
 
-    // 7. Mark attendance started
     isAttendanceStarted = true;
     emit(ScanSuccess(student));
   }
 
-  Future<void> updateStudentAttendance(
-      Studentmodel student, String studentId) async {
-
+  Future<void> updateStudentAttendance(Studentmodel student, String studentId) async {
     student.countingAttendedDays ??= [];
-    student.countingAttendedDays!.add(
-      DayRecord(date: selectedDateStr, day: selectedDay),
-    );
+    student.countingAttendedDays!.add(DayRecord(date: selectedDateStr, day: selectedDay));
 
-
-     student.countingAbsentDays ??= [];
-    student.countingAbsentDays!.remove(
-      DayRecord(date: selectedDateStr, day: selectedDay),
-    );
+    student.countingAbsentDays ??= [];
+    student.countingAbsentDays!.removeWhere((dayRecord) =>
+    dayRecord.date == selectedDateStr && dayRecord.day == selectedDay);
 
     await Firebasefunctions.updateStudentInCollection(
       magmo3aModel.grade ?? "",
@@ -239,6 +218,7 @@ class AbsentCubit extends Cubit<AbsentState> {
     );
   }
 
+  // ------------------- SCAN QR -------------------
   Future<void> _scanQrcode(BuildContext context) async {
     ScaffoldMessengerState scaffoldMessenger = ScaffoldMessenger.of(context);
     Navigator.of(context).push(
@@ -246,18 +226,13 @@ class AbsentCubit extends Cubit<AbsentState> {
         builder: (context) => BlocProvider.value(
           value: this,
           child: AiBarcodeScanner(
-            onDispose: () {
-              debugPrint("Barcode scanner disposed!");
-            },
+            onDispose: () => debugPrint("Barcode scanner disposed!"),
             hideGalleryButton: false,
-            controller: MobileScannerController(
-              detectionSpeed: DetectionSpeed.noDuplicates,
-            ),
+            controller: MobileScannerController(detectionSpeed: DetectionSpeed.noDuplicates),
             onDetect: (BarcodeCapture capture) async {
-              final String? scannedValue = capture.barcodes.first.rawValue;
+              final scannedValue = capture.barcodes.first.rawValue;
               if (scannedValue == null) return;
 
-              // ✅ Instantly remove any previous snackbar
               scaffoldMessenger.clearSnackBars();
 
               final student = await Firebasefunctions.getStudentById(
@@ -265,17 +240,14 @@ class AbsentCubit extends Cubit<AbsentState> {
                 scannedValue,
               );
 
-              if (student != null &&
-                  student.hisGroupsId?.contains(magmo3aModel.id) == true) {
+              if (student != null && student.hisGroupsId?.contains(magmo3aModel.id) == true) {
                 await _addStudentToPresent(student, scannedValue, context);
               } else {
-                final msg = student == null
-                    ? "لم يتم العثور على الطالب!"
-                    : "الطالب ليس ضمن هذه المجموعة!";
-
                 scaffoldMessenger.showSnackBar(
                   SnackBar(
-                    content: Text(msg),
+                    content: Text(student == null
+                        ? "لم يتم العثور على الطالب!"
+                        : "الطالب ليس ضمن هذه المجموعة!"),
                     backgroundColor: Colors.red,
                     duration: const Duration(milliseconds: 800),
                     behavior: SnackBarBehavior.floating,
@@ -289,24 +261,14 @@ class AbsentCubit extends Cubit<AbsentState> {
     );
   }
 
+  // ------------------- SEARCH STUDENT -------------------
   void _searchStudent(String query) {
-    if (query.isEmpty) {
-      filteredStudentsList = studentsList;
-    } else {
-      filteredStudentsList = studentsList.where((student) {
-        final name = student.name?.toLowerCase() ?? '';
-        return name.contains(query.toLowerCase());
-      }).toList();
-    }
+    filteredStudentsList = query.isEmpty
+        ? studentsList
+        : studentsList
+        .where((student) => (student.name ?? '').toLowerCase().contains(query.toLowerCase()))
+        .toList();
 
-    emit(SearchResultsUpdated(
-      filteredStudentsList,
-    ));
-  }
-
-  @override
-  Future<void> close() {
-    _studentsSubscription?.cancel();
-    return super.close();
+    emit(SearchResultsUpdated(filteredStudentsList));
   }
 }

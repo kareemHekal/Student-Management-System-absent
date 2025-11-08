@@ -136,6 +136,24 @@ class Firebasefunctions {
   }
 
 
+  static Future<QuerySnapshot<Studentmodel>> getStudentsByGroupIdOnce(
+      String grade,
+      String groupId
+      ) async {
+    var collection = getSecondaryCollection(grade);
+
+    final query = collection
+        .where("hisGroupsId", arrayContains: groupId)
+        .withConverter<Studentmodel>(
+      fromFirestore: (snap, _) => Studentmodel.fromJson(snap.data()!),
+      toFirestore: (student, _) => student.toJson(),
+    );
+
+    return await query.get(); // fetch once
+  }
+
+
+
   /// Fetches an absence record by its date.
   static Future<AbsenceModel?> getAbsenceByDate(String day, String groupId, String date) async {
     try {

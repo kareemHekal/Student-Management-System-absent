@@ -221,72 +221,49 @@ class _StudentsAttendingState extends State<StudentsAttending> {
                                           child: Text('Remove',
                                               style: TextStyle(
                                                   color: Colors.white)),
-                                          onPressed: () {
-                                            setState(() {
-                                              // Get the student being moved
-                                              final student = widget
-                                                  .absenceModel
-                                                  .attendStudents[index];
+                                          onPressed: () async {
+                                            // Do async operations FIRST
+                                            final student = widget.absenceModel.attendStudents[index];
 
-                                              // Add the student to the absentStudents list
-                                              widget.absenceModel.absentStudents
-                                                  .add(student);
+                                            widget.absenceModel.absentStudents.add(student);
+                                            widget.absenceModel.attendStudents.removeWhere((s) => s.id == student.id);
 
-                                              // Remove the student from the attendStudents list
-                                              widget.absenceModel.attendStudents
-                                                  .removeWhere((s) =>
-                                                      s.id == student.id);
+                                            student.countingAbsentDays ??= [];
+                                            student.countingAbsentDays!.add(
+                                              DayRecord(date: widget.absenceModel.date, day: widget.selectedDay),
+                                            );
 
-                                              // Update the student's days counters
+                                            student.countingAttendedDays ??= [];
+                                            student.countingAttendedDays!.removeWhere((dayRecord) =>
+                                            dayRecord.date == widget.absenceModel.date &&
+                                                dayRecord.day == widget.selectedDay);
 
+                                            // 🔹 Do Firestore updates (async)
+                                            await Firebasefunctions.updateStudentInCollection(
+                                              widget.magmo3aModel.grade ?? "",
+                                              student.id,
+                                              student,
+                                            );
 
-                                              student.countingAbsentDays ??= [];
-                                              student.countingAbsentDays!.add(
-                                                DayRecord(date: widget.absenceModel.date, day: widget.selectedDay),
-                                              );
+                                            AbsenceModel absenceModel = AbsenceModel(
+                                              attendStudents: widget.absenceModel.attendStudents,
+                                              absentStudents: widget.absenceModel.absentStudents,
+                                              date: widget.absenceModel.date,
+                                              numberOfStudents: widget.absenceModel.numberOfStudents,
+                                            );
 
-                                              student.countingAttendedDays ??= [];
-                                              student.countingAttendedDays!.remove(
-                                                DayRecord(date: widget.absenceModel.date, day: widget.selectedDay),
-                                              );
+                                            await Firebasefunctions.updateAbsenceByDateInSubcollection(
+                                              widget.selectedDay,
+                                              widget.magmo3aModel.id,
+                                              widget.absenceModel.date,
+                                              absenceModel,
+                                            );
 
-                                              // Update the student in the Firestore collection
-                                              Firebasefunctions
-                                                  .updateStudentInCollection(
-                                                widget.magmo3aModel.grade ?? "",
-                                                // Grade of the student
-                                                student.id, // ID of the student
-                                                student, // Updated student model
-                                              );
-
-                                              // Create an updated AbsenceModel
-                                              AbsenceModel absenceModel =
-                                                  AbsenceModel(
-                                                attendStudents: widget
-                                                    .absenceModel
-                                                    .attendStudents,
-                                                absentStudents: widget
-                                                    .absenceModel
-                                                    .absentStudents,
-                                                date: widget.absenceModel.date,
-                                                numberOfStudents: widget
-                                                    .absenceModel
-                                                    .numberOfStudents,
-                                              );
-
-                                              // Update the AbsenceModel in Firestore
-                                              Firebasefunctions
-                                                  .updateAbsenceByDateInSubcollection(
-                                                widget.selectedDay,
-                                                widget.magmo3aModel.id,
-                                                widget.absenceModel.date,
-                                                absenceModel,
-                                              );
-                                            });
-
-                                            // Close the dialog
+                                            // ✅ Then update the UI synchronously
+                                            setState(() {});
                                             Navigator.of(context).pop();
-                                          }),
+                                          }
+                                      ),
                                     ],
                                     backgroundColor: Colors.green[50],
                                   );

@@ -30,12 +30,7 @@ class _DeleteConfirmationDialogContentState
       isProcessing = false;
     });
 
-    // Navigate to HomeScreen and show SnackBar after deletion
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (context) => Homescreen()),
-      (route) => false, // Removes all previous routes
-    );
+
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
