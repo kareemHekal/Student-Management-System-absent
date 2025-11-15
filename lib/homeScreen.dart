@@ -36,7 +36,7 @@ class _HomescreenState extends State<Homescreen> {
         centerTitle: true,
         backgroundColor: app_colors.green,
         title: Image.asset(
-          "assets/images/2....2.png",
+          "assets/images/2....logo.png",
           height: 100,
           width: 90,
         ),
@@ -51,7 +51,7 @@ class _HomescreenState extends State<Homescreen> {
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 60),
-            child: Center(child: Image.asset("assets/images/1......1.png")),
+            child: Center(child: Image.asset("assets/images/logo.png")),
           ),
           Column(
             children: [
