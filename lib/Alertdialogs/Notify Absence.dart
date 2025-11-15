@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import '../colors_app.dart';
 
 class SelectRecipientDialogContent extends StatelessWidget {
@@ -19,28 +18,27 @@ class SelectRecipientDialogContent extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         ListTile(
-          title: Text('Father', style: TextStyle(color: app_colors.orange),),
+          title: Text('الأب', style: TextStyle(color: app_colors.orange)),
           onTap: () {
             Navigator.of(context).pop();
             sendMessageToFather();
-            print("father");
+            print("الأب");
           },
         ),
         ListTile(
-          title: Text('Mother',style: TextStyle(color: app_colors.orange),),
+          title: Text('الأم', style: TextStyle(color: app_colors.orange)),
           onTap: () {
             Navigator.of(context).pop();
             sendMessageToMother();
-            print("mother");
-
+            print("الأم");
           },
         ),
         ListTile(
-          title: Text('Student',style: TextStyle(color: app_colors.orange),),
+          title: Text('الطالب', style: TextStyle(color: app_colors.orange)),
           onTap: () {
             Navigator.of(context).pop();
             sendMessageToStudent();
-            print("anaaaaaaaaaaaaa");
+            print("الطالب");
           },
         ),
       ],

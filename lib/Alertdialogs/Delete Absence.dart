@@ -30,13 +30,11 @@ class _DeleteConfirmationDialogContentState
       isProcessing = false;
     });
 
-
-
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-          backgroundColor:Colors.green,
+          backgroundColor: Colors.green,
           content: Text(
-            "Absence deleted successfully!",
+            "تم حذف الغياب بنجاح!",
             style: TextStyle(color: app_colors.white),
           )),
     );
@@ -63,7 +61,7 @@ class _DeleteConfirmationDialogContentState
         mainAxisSize: MainAxisSize.min,
         children: [
           const Text(
-            "Are you sure you want to delete this absence?",
+            "هل أنت متأكد من حذف هذا الغياب؟",
             style: TextStyle(color: app_colors.green),
           ),
           const SizedBox(height: 16),
@@ -74,17 +72,17 @@ class _DeleteConfirmationDialogContentState
                 onPressed: () {
                   Navigator.of(context).pop(); // Close dialog
                 },
-                child: const Text("Cancel"),
+                child: const Text("إلغاء"),
               ),
               ElevatedButton(
                 onPressed: isProcessing
                     ? null
                     : () {
-                        _handleDelete();
-                      },
+                  _handleDelete();
+                },
                 child: isProcessing
                     ? const CircularProgressIndicator()
-                    : const Text("Delete"),
+                    : const Text("حذف"),
               ),
             ],
           ),

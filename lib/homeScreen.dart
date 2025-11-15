@@ -108,7 +108,7 @@ class _HomescreenState extends State<Homescreen> {
                     if (magmo3as.isEmpty) {
                       return Center(
                         child: Text(
-                          "No groups",
+                          "لا توجد مجموعات في هذا اليوم",
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             fontSize: 25,
                             color: app_colors.black,

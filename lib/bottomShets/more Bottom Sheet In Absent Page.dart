@@ -34,7 +34,7 @@ class CustomBottomSheet extends StatefulWidget {
 class _CustomBottomSheetState extends State<CustomBottomSheet> {
   String _buildNotesForDate(Studentmodel student, String dateKey) {
     if (student.notes == null || student.notes!.isEmpty) {
-      return ("There are no notes");
+      return "لا توجد ملاحظات";
     }
     String? noteForSelectedDate;
     for (var note in student.notes!) {
@@ -44,9 +44,9 @@ class _CustomBottomSheetState extends State<CustomBottomSheet> {
       }
     }
     if (noteForSelectedDate != null) {
-      return ("$noteForSelectedDate");
+      return noteForSelectedDate;
     } else {
-      return ("No notes for $dateKey");
+      return "لا توجد ملاحظات لتاريخ $dateKey";
     }
   }
 
@@ -64,9 +64,9 @@ class _CustomBottomSheetState extends State<CustomBottomSheet> {
 
     final String selectedDate = widget.absenceModel.date;
     final String day = widget.selectedDay;
-    final String grade = widget.magmo3aModel.grade ?? 'Unknown Grade';
+    final String grade = widget.magmo3aModel.grade ?? 'غير محدد';
     final String time =
-        widget.magmo3aModel.time?.format(context) ?? 'Unknown Time';
+        widget.magmo3aModel.time?.format(context) ?? 'غير محدد';
     final int absentCount = widget.filteredStudentsList.length;
 
     List<List<Studentmodel>> studentChunks = [];
@@ -87,49 +87,24 @@ class _CustomBottomSheetState extends State<CustomBottomSheet> {
               crossAxisAlignment: pw.CrossAxisAlignment.center,
               children: [
                 pw.Text(
-                  "Attendance Report",
-                  style: pw.TextStyle(font: font, fontSize: 16),
-                  textDirection: _getTextDirection("Attendance Report"),
+                  "تقرير الحضور والغياب",
+                  style: pw.TextStyle(font: font, fontSize: 18, fontWeight: pw.FontWeight.bold),
+                  textDirection: pw.TextDirection.rtl,
                 ),
                 pw.SizedBox(height: 10),
-                pw.Text(
-                  "Date: $selectedDate",
-                  style: pw.TextStyle(font: font, fontSize: 12),
-                  textDirection: _getTextDirection("Date: $selectedDate"),
-                ),
-                pw.Text(
-                  "Day: $day",
-                  style: pw.TextStyle(font: font, fontSize: 12),
-                  textDirection: _getTextDirection(day),
-                ),
-                pw.Text(
-                  "Grade: $grade",
-                  style: pw.TextStyle(font: font, fontSize: 12),
-                  textDirection: _getTextDirection(grade),
-                ),
-                pw.Text(
-                  "Time: $time",
-                  style: pw.TextStyle(font: font, fontSize: 12),
-                  textDirection: _getTextDirection(time),
-                ),
-                pw.Text(
-                  "Total Absent Students: $absentCount",
-                  style: pw.TextStyle(font: font, fontSize: 12),
-                  textDirection:
-                  _getTextDirection("Total Absent Students: $absentCount"),
-                ),
+                pw.Text("التاريخ: $selectedDate", style: pw.TextStyle(font: font, fontSize: 12)),
+                pw.Text("اليوم: $day", style: pw.TextStyle(font: font, fontSize: 12)),
+                pw.Text("الصف: $grade", style: pw.TextStyle(font: font, fontSize: 12)),
+                pw.Text("الوقت: $time", style: pw.TextStyle(font: font, fontSize: 12)),
+                pw.Text("عدد الطلاب الغائبين: $absentCount", style: pw.TextStyle(font: font, fontSize: 12)),
                 pw.Divider(),
                 if (studentChunks.isNotEmpty)
                   pw.Row(
                     mainAxisAlignment: pw.MainAxisAlignment.center,
                     children: [
-                      pw.Expanded(
-                        child: _buildStudentCard(studentChunks[0][0], font),
-                      ),
+                      pw.Expanded(child: _buildStudentCard(studentChunks[0][0], font)),
                       if (studentChunks[0].length > 1)
-                        pw.Expanded(
-                          child: _buildStudentCard(studentChunks[0][1], font),
-                        ),
+                        pw.Expanded(child: _buildStudentCard(studentChunks[0][1], font)),
                     ],
                   ),
                 pw.SizedBox(height: 20),
@@ -140,95 +115,166 @@ class _CustomBottomSheetState extends State<CustomBottomSheet> {
       ),
     );
 
-
     for (var i = 1; i < studentChunks.length; i++) {
       pdf.addPage(
         pw.Page(
           pageFormat: PdfPageFormat.a4,
           build: (pw.Context context) {
-            return pw.Column(
-              mainAxisAlignment: pw.MainAxisAlignment.start,
-              crossAxisAlignment: pw.CrossAxisAlignment.center,
-              children: [
-                pw.Row(
-                  mainAxisAlignment: pw.MainAxisAlignment.center,
-                  children: [
-                    pw.Expanded(
-                      child: _buildStudentCard(studentChunks[i][0], font),
-                    ),
-                    if (studentChunks[i].length > 1)
-                      pw.Expanded(
-                        child: _buildStudentCard(studentChunks[i][1], font),
-                      ),
-                  ],
-                ),
-                pw.SizedBox(height: 20),
-              ],
+            return pw.Directionality(
+              textDirection: pw.TextDirection.rtl,
+              child: pw.Column(
+                children: [
+                  pw.Row(
+                    mainAxisAlignment: pw.MainAxisAlignment.center,
+                    children: [
+                      pw.Expanded(child: _buildStudentCard(studentChunks[i][0], font)),
+                      if (studentChunks[i].length > 1)
+                        pw.Expanded(child: _buildStudentCard(studentChunks[i][1], font)),
+                    ],
+                  ),
+                  pw.SizedBox(height: 20),
+                ],
+              ),
             );
           },
         ),
       );
     }
 
-    await Printing.layoutPdf(
-      onLayout: (PdfPageFormat format) async => pdf.save(),
-    );
+    await Printing.layoutPdf(onLayout: (PdfPageFormat format) async => pdf.save());
   }
 
   pw.Widget _buildStudentCard(Studentmodel student, pw.Font font) {
     String note = _buildNotesForDate(student, widget.absenceModel.date);
     return pw.Container(
       margin: const pw.EdgeInsets.all(8.0),
-      padding: const pw.EdgeInsets.all(16.0),
+      padding: const pw.EdgeInsets.all(12.0),
       decoration: pw.BoxDecoration(
         borderRadius: pw.BorderRadius.circular(10),
         color: PdfColors.white,
-        border: pw.Border.all(color: PdfColors.black, width: 2),
+        border: pw.Border.all(color: PdfColors.black, width: 1.5),
       ),
       child: pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
-          pw.Row(
-            mainAxisAlignment: pw.MainAxisAlignment.start,
-            children: [
-              pw.Text("Name: ",
-                  style: pw.TextStyle(font: font, fontSize: 12),
-                  textDirection: _getTextDirection("Name: ")),
-              pw.Text(student.name ?? 'Unnamed Student',
-                  style: pw.TextStyle(font: font, fontSize: 12),
-                  textDirection:
-                  _getTextDirection(student.name ?? 'Unnamed Student')),
-            ],
-          ),
-          pw.SizedBox(height: 8),
-          pw.Text("Phone Number: ${student.phoneNumber ?? 'N/A'}",
-              style: pw.TextStyle(font: font, fontSize: 12),
-              textDirection:
-              _getTextDirection(student.phoneNumber ?? 'N/A')),
-          pw.SizedBox(height: 8),
-          pw.Text("Mother Number: ${student.motherPhone ?? 'N/A'}",
-              style: pw.TextStyle(font: font, fontSize: 12),
-              textDirection:
-              _getTextDirection(student.motherPhone ?? 'N/A')),
-          pw.SizedBox(height: 8),
-          pw.Text("Father Number: ${student.fatherPhone ?? 'N/A'}",
-              style: pw.TextStyle(font: font, fontSize: 12),
-              textDirection:
-              _getTextDirection(student.fatherPhone ?? 'N/A')),
-          pw.Text("Grade: ${student.grade ?? 'N/A'}",
-              style: pw.TextStyle(font: font, fontSize: 12),
-              textDirection:
-              _getTextDirection(student.grade ?? 'N/A')),
-          pw.SizedBox(height: 8),
-          pw.Text(note,
-              style: pw.TextStyle(font: font, fontSize: 12),
-              textDirection: _getTextDirection(note)),
+          pw.Text("الاسم: ${student.name ?? 'بدون اسم'}", style: pw.TextStyle(font: font, fontSize: 12)),
+          pw.Text("رقم الهاتف: ${student.phoneNumber ?? 'غير متوفر'}", style: pw.TextStyle(font: font, fontSize: 12)),
+          pw.Text("رقم الأم: ${student.motherPhone ?? 'غير متوفر'}", style: pw.TextStyle(font: font, fontSize: 12)),
+          pw.Text("رقم الأب: ${student.fatherPhone ?? 'غير متوفر'}", style: pw.TextStyle(font: font, fontSize: 12)),
+          pw.Text("الصف: ${student.grade ?? 'غير متوفر'}", style: pw.TextStyle(font: font, fontSize: 12)),
+          pw.SizedBox(height: 4),
+          pw.Text("الملاحظات: $note", style: pw.TextStyle(font: font, fontSize: 12)),
         ],
       ),
     );
   }
 
-   /// delete
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 150,
+      decoration: BoxDecoration(
+        color: app_colors.ligthGreen,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Divider(height: 3, thickness: 5, color: app_colors.orange),
+            SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildIconButton(
+                  imagePath: "assets/icon/printer.png",
+                  label: "طباعة",
+                  onPressed: () async {
+                    if (widget.filteredStudentsList.isNotEmpty) {
+                      await _generatePdf(context);
+                    } else {
+                      showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          backgroundColor: app_colors.ligthGreen,
+                          title: Text("لا يوجد طلاب غائبين", style: TextStyle(color: app_colors.orange)),
+                          content: Text("لا يوجد طلاب غائبين للتصدير.", style: TextStyle(color: app_colors.ligthGreen)),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(),
+                              child: Text("موافق", style: TextStyle(color: app_colors.orange)),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+                  },
+                ),
+                _buildIconButton(
+                  imagePath: "assets/icon/done.png",
+                  label: "الطلاب الحاضرون",
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => StudentsAttending(
+                          absenceModel: widget.absenceModel,
+                          magmo3aModel: widget.magmo3aModel,
+                          selectedDay: widget.selectedDay,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                _buildIconButton(
+                  imagePath: "assets/icon/delete.png",
+                  label: "حذف الغياب",
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        backgroundColor: app_colors.ligthGreen,
+                        title: Text("حذف الغياب", style: TextStyle(color: app_colors.orange)),
+                        content: DeleteConfirmationDialogContent(
+                          onConfirm: () async {
+                            await Firebasefunctions.deleteAbsenceFromSubcollection(
+                              widget.selectedDay,
+                              widget.magmo3aModel.id,
+                              widget.absenceModel.date,
+                            ).catchError((error) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text("حدث خطأ أثناء حذف الغياب: $error")),
+                              );
+                            });
+                            await fixAttendanceCounts();
+                          },
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildIconButton({required String imagePath, required String label, required VoidCallback onPressed}) {
+    return Column(
+      children: [
+        GestureDetector(
+          onTap: onPressed,
+          child: Image.asset(imagePath, width: 40, height: 40),
+        ),
+        SizedBox(height: 8),
+        Text(label, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+      ],
+    );
+  }
+
   Future<void> fixAttendanceCounts() async {
     runWithLoading(context, () async {
       try {
@@ -278,144 +324,4 @@ class _CustomBottomSheetState extends State<CustomBottomSheet> {
 
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 150,
-      decoration: BoxDecoration(
-        color: app_colors.ligthGreen,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Divider(
-              height: 3,
-              thickness: 5,
-              color: app_colors.orange,
-            ),
-            SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _buildIconButton(
-                  imagePath: "assets/icon/printer.png",
-                  label: "Print",
-                  onPressed: () async {
-                    if (widget.filteredStudentsList.isNotEmpty) {
-                      await _generatePdf(context);
-                    } else {
-                      showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return AlertDialog(
-                            title: Text("No Absent Students",
-                                style: TextStyle(color: app_colors.orange)),
-                            content: Text("There are no absent students to export.",
-                                style: TextStyle(color: app_colors.ligthGreen)),
-                            actions: <Widget>[
-                              TextButton(
-                                child: Text('OK',
-                                    style: TextStyle(color: app_colors.orange)),
-                                onPressed: () {
-                                  Navigator.of(context).pop();
-                                },
-                              ),
-                            ],
-                            backgroundColor: app_colors.ligthGreen,
-                          );
-                        },
-                      );
-                    }
-                  },
-                ),
-                _buildIconButton(
-                  imagePath: "assets/icon/done.png",
-                  label: "Students attending",
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => StudentsAttending(
-                          absenceModel: AbsenceModel(
-                            date: widget.absenceModel.date,
-                            numberOfStudents:
-                            widget.absenceModel.numberOfStudents,
-                            absentStudents:
-                            widget.absenceModel.absentStudents,
-                            attendStudents:
-                            widget.absenceModel.attendStudents,
-                          ),
-                          magmo3aModel: widget.magmo3aModel,
-                          selectedDay: widget.selectedDay,
-                        ),
-                      ),
-                    );
-                  },
-                ),
-                _buildIconButton(
-                  imagePath: "assets/icon/delete.png",
-                  label: "Delete",
-                  onPressed: ()  {
-                    showDialog(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        backgroundColor: app_colors.ligthGreen,
-                        title: const Text("Delete Absence",
-                            style: TextStyle(color: app_colors.orange)),
-                        content: DeleteConfirmationDialogContent(
-                          onConfirm: () async{
-                           await Firebasefunctions.deleteAbsenceFromSubcollection(
-                              widget.selectedDay,
-                              widget.magmo3aModel.id,
-                              widget.absenceModel.date,
-                            ).catchError((error) {
-                              print("Error deleting absence: $error");
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                    content:
-                                    Text('Error deleting absence: $error')),
-                              );
-                            });
-                           await fixAttendanceCounts();
-
-                          },
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildIconButton({
-    required String imagePath,
-    required String label,
-    required VoidCallback onPressed,
-  }) {
-    return Column(
-      children: [
-        GestureDetector(
-          onTap: onPressed,
-          child: Image.asset(
-            imagePath,
-            width: 40,
-            height: 40,
-          ),
-        ),
-        SizedBox(height: 8),
-        Text(
-          label,
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-        ),
-      ],
-    );
-  }
 }

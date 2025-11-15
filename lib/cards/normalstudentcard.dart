@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import '../colors_app.dart';
 import '../models/Studentmodel.dart';
 
-class normalstudentwiget extends StatelessWidget {
+class NormalStudentWidget extends StatelessWidget {
   final Studentmodel? studentModel;
   final String? grade;
 
-  normalstudentwiget({
+  NormalStudentWidget({
     required this.studentModel,
     required this.grade,
     super.key,
@@ -29,12 +29,12 @@ class normalstudentwiget extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildInfoRow(context, "Name:", studentModel?.name ?? 'N/A'),
+              _buildInfoRow(context, "الاسم:", studentModel?.name ?? 'N/A'),
               _buildInfoRow(
-                  context, "Phone Number:", studentModel?.phoneNumber ?? 'N/A'),
-              _buildInfoRow(
-                  context, "Parent  Number:", studentModel?.motherPhone ?? 'N/A'),
-              _buildInfoRow(context, "Grade:", studentModel?.grade ?? 'N/A'),
+                  context, "رقم الهاتف:", studentModel?.phoneNumber ?? 'N/A'),
+              _buildInfoRow(context, "رقم ولي الأمر:",
+                  studentModel?.motherPhone ?? 'N/A'),
+              _buildInfoRow(context, "الصف:", studentModel?.grade ?? 'N/A'),
               const SizedBox(height: 10),
               _buildStudentDaysList(),
             ],
@@ -74,25 +74,22 @@ class normalstudentwiget extends StatelessWidget {
     );
   }
 
-  // Widget to display student-specific days if available
   Widget _buildStudentDaysList() {
-    // Assuming `studentModel.hisGroups` is a list of Magmo3amodel
     List<Map<String, dynamic>> daysWithTimes = studentModel?.hisGroups?.map((group) {
       return {
-        'day': group.days, // Group days as a string (e.g., "Monday, Wednesday")
+        'day': group.days,
         'time': group.time != null
             ? {'hour': group.time?.hour, 'minute': group.time?.minute}
             : null,
       };
     }).toList() ?? [];
 
-    // Remove entries where day is null
     daysWithTimes.removeWhere((entry) => entry['day'] == null);
 
     return Row(
       children: [
         const Text(
-          "Student Days:",
+          "أيام الطالب:",
           style: TextStyle(
             color: app_colors.green,
             fontSize: 18,
@@ -109,8 +106,7 @@ class normalstudentwiget extends StatelessWidget {
                     ? TimeOfDay(hour: entry['time']['hour'], minute: entry['time']['minute'])
                     : null;
 
-                // Convert TimeOfDay to 12-hour format with AM/PM
-                String timeString = time != null ? _formatTime12Hour(time) : 'No Time';
+                String timeString = time != null ? _formatTime12Hour(time) : 'لا يوجد وقت';
 
                 return Row(
                   children: [
@@ -127,7 +123,7 @@ class normalstudentwiget extends StatelessWidget {
                             timeString,
                             style: const TextStyle(
                               color: app_colors.orange,
-                              fontSize: 12, // Smaller font for time
+                              fontSize: 12,
                             ),
                           ),
                         ],
@@ -135,7 +131,6 @@ class normalstudentwiget extends StatelessWidget {
                       backgroundColor: app_colors.green,
                     ),
                     const SizedBox(width: 8),
-                    // Add some space between each day
                   ],
                 );
               }).toList(),
@@ -145,14 +140,11 @@ class normalstudentwiget extends StatelessWidget {
       ],
     );
   }
+
   String _formatTime12Hour(TimeOfDay time) {
-    final int hour = time.hourOfPeriod == 0
-        ? 12
-        : time.hourOfPeriod; // Convert 0 to 12 for midnight/noon
-    final String period = time.period == DayPeriod.am ? 'AM' : 'PM';
-    final String minute =
-    time.minute.toString().padLeft(2, '0'); // Ensure two digits for minutes
+    final int hour = time.hourOfPeriod == 0 ? 12 : time.hourOfPeriod;
+    final String period = time.period == DayPeriod.am ? 'ص' : 'م';
+    final String minute = time.minute.toString().padLeft(2, '0');
     return '$hour:$minute $period';
   }
-
 }

@@ -16,18 +16,17 @@ class StudentsAttending extends StatefulWidget {
 
   StudentsAttending(
       {required this.absenceModel,
-      required this.magmo3aModel,
-      required this.selectedDay,
-      super.key});
+        required this.magmo3aModel,
+        required this.selectedDay,
+        super.key});
 
   @override
   _StudentsAttendingState createState() => _StudentsAttendingState();
 }
 
 class _StudentsAttendingState extends State<StudentsAttending> {
-  late List<Studentmodel> filteredStudents; // List to hold filtered students
-  final TextEditingController _searchController =
-      TextEditingController(); // Search controller
+  late List<Studentmodel> filteredStudents;
+  final TextEditingController _searchController = TextEditingController();
 
   Future<void> addStudentToList(grade, id) async {
     Studentmodel? student = await Firebasefunctions.getStudentById(
@@ -45,24 +44,25 @@ class _StudentsAttendingState extends State<StudentsAttending> {
         numberOfStudents: widget.absenceModel.numberOfStudents,
         absentStudents: widget.absenceModel.absentStudents,
       );
-      Firebasefunctions.updateAbsenceByDateInSubcollection(widget.selectedDay,
-          widget.magmo3aModel.id, widget.absenceModel.date, absenceModel);
+      Firebasefunctions.updateAbsenceByDateInSubcollection(
+          widget.selectedDay,
+          widget.magmo3aModel.id,
+          widget.absenceModel.date,
+          absenceModel);
     }
   }
 
   @override
   void initState() {
     super.initState();
-    filteredStudents =
-        widget.absenceModel.attendStudents; // Initially show all students
+    filteredStudents = widget.absenceModel.attendStudents;
   }
 
-  // Method to filter the list based on search query
   void _filterStudents(String query) {
     setState(() {
       filteredStudents = widget.absenceModel.attendStudents
           .where((student) =>
-              student.name!.toLowerCase().contains(query.toLowerCase()))
+          student.name!.toLowerCase().contains(query.toLowerCase()))
           .toList();
     });
   }
@@ -82,7 +82,7 @@ class _StudentsAttendingState extends State<StudentsAttending> {
                     selectedDateStr: widget.absenceModel.date,
                   ),
                 ),
-                (route) => false,
+                    (route) => false,
               );
             },
             icon: Icon(Icons.arrow_back_ios, color: app_colors.orange),
@@ -102,7 +102,7 @@ class _StudentsAttendingState extends State<StudentsAttending> {
             ),
           ),
           bottom: PreferredSize(
-            preferredSize: Size.fromHeight(130), // Adjust height as needed
+            preferredSize: Size.fromHeight(130),
             child: Container(
               decoration: BoxDecoration(
                 color: app_colors.green,
@@ -114,44 +114,42 @@ class _StudentsAttendingState extends State<StudentsAttending> {
               padding: EdgeInsets.only(bottom: 10, left: 15, right: 15),
               child: Column(
                 children: [
-                  // Search Bar
                   TextFormField(
                     style: TextStyle(color: app_colors.green),
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: Colors.white,
-                      hintText: 'Search',
+                      hintText: 'ابحث عن طالب',
                       hintStyle: TextStyle(color: app_colors.green),
                       contentPadding: EdgeInsets.symmetric(
                           vertical: 15.0, horizontal: 20.0),
                       enabledBorder: OutlineInputBorder(
                         borderSide:
-                            BorderSide(color: app_colors.orange, width: 2.0),
+                        BorderSide(color: app_colors.orange, width: 2.0),
                         borderRadius: BorderRadius.circular(20.0),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderSide:
-                            BorderSide(color: app_colors.orange, width: 2.0),
+                        BorderSide(color: app_colors.orange, width: 2.0),
                         borderRadius: BorderRadius.circular(20.0),
                       ),
                       suffixIcon: IconButton(
                         icon: Icon(Icons.clear, color: app_colors.orange),
                         onPressed: () {
                           _searchController.clear();
-                          _filterStudents(''); // Clear filter
+                          _filterStudents('');
                         },
                       ),
                     ),
                     cursorColor: app_colors.green,
                     controller: _searchController,
                     onChanged: (value) {
-                      _filterStudents(value); // Filter students based on input
+                      _filterStudents(value);
                     },
                   ),
                   SizedBox(height: 10),
-                  // Number of Students
                   Text(
-                    'Attending Students: ${filteredStudents.length}',
+                    'عدد الطلاب الحاضرين: ${filteredStudents.length}',
                     style: TextStyle(fontSize: 16, color: Colors.white),
                   ),
                 ],
@@ -167,119 +165,133 @@ class _StudentsAttendingState extends State<StudentsAttending> {
             ),
             filteredStudents.isEmpty
                 ? Padding(
-                    padding: const EdgeInsets.all(8),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          'No one attended', // Message when no students are present
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: app_colors.black,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
+              padding: const EdgeInsets.all(8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'لا يوجد طلاب حاضرين',
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: app_colors.black,
+                      fontWeight: FontWeight.bold,
                     ),
-                  )
-                : ListView.builder(
-                    itemCount: filteredStudents.length,
-                    itemBuilder: (context, index) {
-                      var student = filteredStudents[index];
-                      return Card(
-                          margin:
-                              EdgeInsets.symmetric(vertical: 6, horizontal: 5),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(15),
-                          ),
-                          child: GestureDetector(
-                            onLongPress: () {
-                              showDialog(
-                                context: context,
-                                builder: (BuildContext context) {
-                                  return AlertDialog(
-                                    title: Text('Confirm get him back',
-                                        style:
-                                            TextStyle(color: Colors.blue[900])),
-                                    content: Text(
-                                        'Are you sure you want to get him back?',
-                                        style:
-                                            TextStyle(color: Colors.blue[800])),
-                                    actions: [
-                                      TextButton(
-                                        child: Text('Cancel',
-                                            style: TextStyle(
-                                                color: Colors.blue[400])),
-                                        onPressed: () {
-                                          Navigator.of(context).pop();
-                                        },
-                                      ),
-                                      ElevatedButton(
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: Colors.blue,
-                                          ),
-                                          child: Text('Remove',
-                                              style: TextStyle(
-                                                  color: Colors.white)),
-                                          onPressed: () async {
-                                            // Do async operations FIRST
-                                            final student = widget.absenceModel.attendStudents[index];
-
-                                            widget.absenceModel.absentStudents.add(student);
-                                            widget.absenceModel.attendStudents.removeWhere((s) => s.id == student.id);
-
-                                            student.countingAbsentDays ??= [];
-                                            student.countingAbsentDays!.add(
-                                              DayRecord(date: widget.absenceModel.date, day: widget.selectedDay),
-                                            );
-
-                                            student.countingAttendedDays ??= [];
-                                            student.countingAttendedDays!.removeWhere((dayRecord) =>
-                                            dayRecord.date == widget.absenceModel.date &&
-                                                dayRecord.day == widget.selectedDay);
-
-                                            // 🔹 Do Firestore updates (async)
-                                            await Firebasefunctions.updateStudentInCollection(
-                                              widget.magmo3aModel.grade ?? "",
-                                              student.id,
-                                              student,
-                                            );
-
-                                            AbsenceModel absenceModel = AbsenceModel(
-                                              attendStudents: widget.absenceModel.attendStudents,
-                                              absentStudents: widget.absenceModel.absentStudents,
-                                              date: widget.absenceModel.date,
-                                              numberOfStudents: widget.absenceModel.numberOfStudents,
-                                            );
-
-                                            await Firebasefunctions.updateAbsenceByDateInSubcollection(
-                                              widget.selectedDay,
-                                              widget.magmo3aModel.id,
-                                              widget.absenceModel.date,
-                                              absenceModel,
-                                            );
-
-                                            // ✅ Then update the UI synchronously
-                                            setState(() {});
-                                            Navigator.of(context).pop();
-                                          }
-                                      ),
-                                    ],
-                                    backgroundColor: Colors.green[50],
-                                  );
-                                },
-                              );
-                            },
-                            child: StudentWidget(
-                              magmo3aModel: widget.magmo3aModel,
-                              selectedDateStr: widget.absenceModel.date,
-                              selectedDate: widget.selectedDay,
-                              grade: student.grade,
-                              studentModel: student,
-                            ),
-                          ));
-                    },
                   ),
+                ],
+              ),
+            )
+                : ListView.builder(
+              itemCount: filteredStudents.length,
+              itemBuilder: (context, index) {
+                var student = filteredStudents[index];
+                return Card(
+                    margin:
+                    EdgeInsets.symmetric(vertical: 6, horizontal: 5),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    child: GestureDetector(
+                      onLongPress: () {
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              title: Text('تأكيد استرجاع الطالب',
+                                  style:
+                                  TextStyle(color: Colors.blue[900])),
+                              content: Text(
+                                  'هل أنت متأكد أنك تريد استرجاع هذا الطالب؟',
+                                  style:
+                                  TextStyle(color: Colors.blue[800])),
+                              actions: [
+                                TextButton(
+                                  child: Text('إلغاء',
+                                      style: TextStyle(
+                                          color: Colors.blue[400])),
+                                  onPressed: () {
+                                    Navigator.of(context).pop();
+                                  },
+                                ),
+                                ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.blue,
+                                    ),
+                                    child: Text('استرجاع',
+                                        style: TextStyle(
+                                            color: Colors.white)),
+                                    onPressed: () async {
+                                      final student = widget
+                                          .absenceModel
+                                          .attendStudents[index];
+
+                                      widget.absenceModel.absentStudents
+                                          .add(student);
+                                      widget.absenceModel.attendStudents
+                                          .removeWhere(
+                                              (s) => s.id == student.id);
+
+                                      student.countingAbsentDays ??= [];
+                                      student.countingAbsentDays!.add(
+                                        DayRecord(
+                                            date:
+                                            widget.absenceModel.date,
+                                            day: widget.selectedDay),
+                                      );
+
+                                      student.countingAttendedDays ??= [];
+                                      student.countingAttendedDays!
+                                          .removeWhere((dayRecord) =>
+                                      dayRecord.date ==
+                                          widget.absenceModel
+                                              .date &&
+                                          dayRecord.day ==
+                                              widget.selectedDay);
+
+                                      await Firebasefunctions
+                                          .updateStudentInCollection(
+                                        widget.magmo3aModel.grade ?? "",
+                                        student.id,
+                                        student,
+                                      );
+
+                                      AbsenceModel absenceModel =
+                                      AbsenceModel(
+                                        attendStudents: widget
+                                            .absenceModel.attendStudents,
+                                        absentStudents: widget
+                                            .absenceModel.absentStudents,
+                                        date: widget.absenceModel.date,
+                                        numberOfStudents: widget
+                                            .absenceModel.numberOfStudents,
+                                      );
+
+                                      await Firebasefunctions
+                                          .updateAbsenceByDateInSubcollection(
+                                        widget.selectedDay,
+                                        widget.magmo3aModel.id,
+                                        widget.absenceModel.date,
+                                        absenceModel,
+                                      );
+
+                                      setState(() {});
+                                      Navigator.of(context).pop();
+                                    }),
+                              ],
+                              backgroundColor: Colors.green[50],
+                            );
+                          },
+                        );
+                      },
+                      child: StudentWidget(
+                        magmo3aModel: widget.magmo3aModel,
+                        selectedDateStr: widget.absenceModel.date,
+                        selectedDate: widget.selectedDay,
+                        grade: student.grade,
+                        studentModel: student,
+                      ),
+                    ));
+              },
+            ),
           ],
         ));
   }

@@ -12,8 +12,8 @@ import '../models/Magmo3amodel.dart';
 class StudentWidget extends StatefulWidget {
   final Studentmodel studentModel;
   final String? grade;
-  final String selectedDateStr; // Ensure this is a String
-  final String selectedDate; // Ensure this is a String
+  final String selectedDateStr;
+  final String selectedDate;
   final Magmo3amodel magmo3aModel;
 
   StudentWidget({
@@ -33,18 +33,16 @@ class _StudentWidgetState extends State<StudentWidget> {
   final TextEditingController _noteController = TextEditingController();
   String? noteForSelectedDate;
 
+  @override
   void initState() {
     super.initState();
     _loadNotes();
   }
 
   String _formatTime12Hour(TimeOfDay time) {
-    final int hour = time.hourOfPeriod == 0
-        ? 12
-        : time.hourOfPeriod; // Convert 0 to 12 for midnight/noon
-    final String period = time.period == DayPeriod.am ? 'AM' : 'PM';
-    final String minute =
-        time.minute.toString().padLeft(2, '0'); // Ensure two digits for minutes
+    final int hour = time.hourOfPeriod == 0 ? 12 : time.hourOfPeriod;
+    final String period = time.period == DayPeriod.am ? 'ص' : 'م';
+    final String minute = time.minute.toString().padLeft(2, '0');
     return '$hour:$minute $period';
   }
 
@@ -88,7 +86,6 @@ ${Constants.teacherName}
     } else {
       _sendWhatsAppMessage(widget.studentModel.phoneNumber!, message);
     }
-
   }
 
   Future<void> _sendWhatsAppMessage(String rawPhone, String message) async {
@@ -97,21 +94,14 @@ ${Constants.teacherName}
         ? '20${cleanedPhone.substring(1)}'
         : cleanedPhone;
     final String encodedMessage = Uri.encodeComponent(message);
-
-    // Build the URL with the message
     final String url = 'https://wa.me/$formattedPhone?text=$encodedMessage';
-
-    print("Sending to: $formattedPhone");
-    print("Message: $encodedMessage");
-    print("URL: $url");
 
     if (await canLaunchUrl(Uri.parse(url))) {
       await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
     } else {
-      print("WhatsApp is not installed or cannot be opened.");
+      print("لا يمكن فتح WhatsApp أو غير مثبت.");
     }
   }
-
 
   Future<void> _loadNotes() async {
     if (!mounted) return;
@@ -123,16 +113,14 @@ ${Constants.teacherName}
   String _getNoteForDate(String dateKey) {
     if (widget.studentModel.notes == null ||
         widget.studentModel.notes!.isEmpty) {
-      return "There are no notes";
+      return "لا توجد ملاحظات";
     }
-
     for (var note in widget.studentModel.notes!) {
       if (note.containsKey(dateKey)) {
         return note[dateKey] ?? "";
       }
     }
-
-    return "No notes for $dateKey";
+    return "لا توجد ملاحظات لهذا التاريخ";
   }
 
   @override
@@ -157,19 +145,16 @@ ${Constants.teacherName}
                     "${widget.studentModel.dateofadd}",
                     style: TextStyle(color: app_colors.orange),
                   ),
-                  SizedBox(
-                    width: 10,
-                  ),
+                  SizedBox(width: 10),
                   _buildIconButton(
                     imagePath: "assets/icon/whatsapp.png",
-                    // Path to WhatsApp icon
                     onPressed: () {
                       showDialog(
                         context: context,
                         builder: (context) => AlertDialog(
                           backgroundColor: app_colors.ligthGreen,
                           title: Text(
-                            'Who would you like to send the message to?',
+                            'لمن تريد إرسال الرسالة؟',
                             style: TextStyle(color: app_colors.green),
                           ),
                           content: SelectRecipientDialogContent(
@@ -181,32 +166,12 @@ ${Constants.teacherName}
                                 _sendMessageToParent('student'),
                           ),
                           actions: [
-                            Material(
-                              color: Colors.transparent,
-                              // Make the material background transparent
-                              elevation: 10,
-                              // Set elevation for the shadow effect
-                              shadowColor: Colors.black.withOpacity(0.5),
-                              // Set shadow color
-                              borderRadius: BorderRadius.circular(10),
-                              // Optional: Add rounded corners
-                              child: TextButton(
-                                onPressed: () {
-                                  Navigator.of(context).pop();
-                                },
-                                style: TextButton.styleFrom(
-                                  backgroundColor: app_colors.orange,
-                                  // Set background color
-                                  foregroundColor: Colors.white,
-                                  // Set text color for contrast
-                                  padding: const EdgeInsets.symmetric(
-                                      vertical: 12,
-                                      horizontal:
-                                          16), // Optional: Adjust padding
-                                ),
-                                child: const Text('Cancel'),
-                              ),
-                            )
+                            TextButton(
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                              },
+                              child: Text('إلغاء'),
+                            ),
                           ],
                         ),
                       );
@@ -229,56 +194,40 @@ ${Constants.teacherName}
                         child: SingleChildScrollView(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.center,
-                            // Keep content centered
                             children: [
-                              // Absence Excuse Title
                               Align(
                                 alignment: Alignment.centerLeft,
-                                // Align title to the left
                                 child: Text(
-                                  "Absence Excuse",
+                                  "عذر الغياب",
                                   style: TextStyle(
-                                    fontSize: 18, // Make the title bigger
-                                    fontWeight:
-                                        FontWeight.w700, // Make the title w700
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w700,
                                   ),
                                 ),
                               ),
                               const SizedBox(height: 8),
-                              // Add some space between the title and content
-
-                              // Absence Excuse Content (centered)
                               Center(
                                 child:
-                                    _buildNotesForDate(widget.selectedDateStr),
+                                _buildNotesForDate(widget.selectedDateStr),
                               ),
-
                               const Divider(
                                   color: app_colors.orange, thickness: 3),
-
-                              // Regular Note Title
                               Align(
                                 alignment: Alignment.centerLeft,
-                                // Align title to the left
                                 child: Text(
-                                  "Regular Note",
+                                  "ملاحظة عادية",
                                   style: TextStyle(
-                                    fontSize: 18, // Make the title bigger
-                                    fontWeight:
-                                        FontWeight.w700, // Make the title bold
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w700,
                                   ),
                                 ),
                               ),
                               const SizedBox(height: 8),
-                              // Add some space between the title and content
-
-                              // Regular Note Content (centered)
                               Center(
                                 child: Text(
                                   widget.studentModel.note ??
-                                      "There is no note",
-                                  textAlign: TextAlign
-                                      .center, // Center the text content
+                                      "لا توجد ملاحظة",
+                                  textAlign: TextAlign.center,
                                 ),
                               ),
                             ],
@@ -296,16 +245,11 @@ ${Constants.teacherName}
                 ],
               ),
               const SizedBox(height: 10),
-              _buildInfoRow(
-                  context, false, "Name:", widget.studentModel.name ?? 'N/A'),_buildInfoRow(context, true, "Phone Number:",
-                  widget.studentModel.phoneNumber ?? 'N/A'),
-              _buildInfoRow(context, true, "Mother Number:",
-                  widget.studentModel.motherPhone ?? 'N/A'),
-              _buildInfoRow(context, true, "Father Number:",
-                  widget.studentModel.fatherPhone ?? 'N/A'),
-
-              _buildInfoRow(
-                  context, false, "Grade:", widget.studentModel.grade ?? 'N/A'),
+              _buildInfoRow(context, false, "الاسم:", widget.studentModel.name ?? 'N/A'),
+              _buildInfoRow(context, true, "رقم الهاتف:", widget.studentModel.phoneNumber ?? 'N/A'),
+              _buildInfoRow(context, true, "رقم الأم:", widget.studentModel.motherPhone ?? 'N/A'),
+              _buildInfoRow(context, true, "رقم الأب:", widget.studentModel.fatherPhone ?? 'N/A'),
+              _buildInfoRow(context, false, "الصف:", widget.studentModel.grade ?? 'N/A'),
               const SizedBox(height: 10),
               _buildStudentDaysList(),
             ],
@@ -315,14 +259,13 @@ ${Constants.teacherName}
     );
   }
 
-  Widget _buildInfoRow(
-      BuildContext context, bool isnumber, String label, String value) {
+  Widget _buildInfoRow(BuildContext context, bool isnumber, String label, String value) {
     void _launchPhoneNumber(String phoneNumber) async {
       final String phoneUrl = 'tel:$phoneNumber';
       if (await canLaunchUrlString(phoneUrl)) {
         await launchUrlString(phoneUrl);
       } else {
-        print('Could not launch $phoneNumber');
+        print('لا يمكن الاتصال بهذا الرقم: $phoneNumber');
       }
     }
 
@@ -340,24 +283,15 @@ ${Constants.teacherName}
           ),
           const SizedBox(width: 20),
           Flexible(
-            child: Theme(
-              data: Theme.of(context).copyWith(
-                textSelectionTheme: TextSelectionThemeData(
-                  selectionColor: app_colors.green.withOpacity(0.5),
-                  cursorColor: app_colors.green,
-                ),
-              ),
-              child: GestureDetector(
-                onLongPress: isnumber ? () => _launchPhoneNumber(value) : null,
-                // Check isnumber
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Text(
-                    value,
-                    style: const TextStyle(
-                      color: app_colors.orange,
-                      fontSize: 25,
-                    ),
+            child: GestureDetector(
+              onLongPress: isnumber ? () => _launchPhoneNumber(value) : null,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Text(
+                  value,
+                  style: const TextStyle(
+                    color: app_colors.orange,
+                    fontSize: 25,
                   ),
                 ),
               ),
@@ -381,32 +315,27 @@ ${Constants.teacherName}
             width: 30,
             height: 30,
           ),
-        ), // مسافة بين الصورة والنص
+        ),
       ],
     );
   }
 
   Widget _buildStudentDaysList() {
-    // Assuming `studentModel.hisGroups` is a list of Magmo3amodel
-    List<Map<String, dynamic>> daysWithTimes =
-        widget.studentModel.hisGroups?.map((group) {
-              return {
-                'day': group
-                    .days, // Group days as a string (e.g., "Monday, Wednesday")
-                'time': group.time != null
-                    ? {'hour': group.time?.hour, 'minute': group.time?.minute}
-                    : null,
-              };
-            }).toList() ??
-            [];
+    List<Map<String, dynamic>> daysWithTimes = widget.studentModel.hisGroups?.map((group) {
+      return {
+        'day': group.days,
+        'time': group.time != null
+            ? {'hour': group.time?.hour, 'minute': group.time?.minute}
+            : null,
+      };
+    }).toList() ?? [];
 
-    // Remove entries where day is null
     daysWithTimes.removeWhere((entry) => entry['day'] == null);
 
     return Row(
       children: [
         const Text(
-          "Student Days:",
+          "أيام الطالب:",
           style: TextStyle(
             color: app_colors.green,
             fontSize: 18,
@@ -420,39 +349,21 @@ ${Constants.teacherName}
               children: daysWithTimes.map((entry) {
                 String day = entry['day'] ?? '';
                 TimeOfDay? time = entry['time'] != null
-                    ? TimeOfDay(
-                        hour: entry['time']['hour'],
-                        minute: entry['time']['minute'])
+                    ? TimeOfDay(hour: entry['time']['hour'], minute: entry['time']['minute'])
                     : null;
-
-                // Convert TimeOfDay to 12-hour format with AM/PM
-                String timeString =
-                    time != null ? _formatTime12Hour(time) : 'No Time';
-
+                String timeString = time != null ? _formatTime12Hour(time) : 'لا يوجد وقت';
                 return Row(
                   children: [
                     Chip(
                       label: Column(
                         children: [
-                          Text(
-                            day,
-                            style: const TextStyle(
-                              color: app_colors.orange,
-                            ),
-                          ),
-                          Text(
-                            timeString,
-                            style: const TextStyle(
-                              color: app_colors.orange,
-                              fontSize: 12, // Smaller font for time
-                            ),
-                          ),
+                          Text(day, style: const TextStyle(color: app_colors.orange)),
+                          Text(timeString, style: const TextStyle(color: app_colors.orange, fontSize: 12)),
                         ],
                       ),
                       backgroundColor: app_colors.green,
                     ),
                     const SizedBox(width: 8),
-                    // Add some space between each day
                   ],
                 );
               }).toList(),
@@ -489,40 +400,33 @@ ${Constants.teacherName}
 
   void _showAddNoteDialog(BuildContext context) {
     String existingNote = "";
-
     if (widget.studentModel.notes != null) {
       for (var existing in widget.studentModel.notes!) {
         if (existing.containsKey(widget.selectedDateStr)) {
-          existingNote = existing[widget.selectedDateStr] ??
-              ""; // Get the existing note or set to empty
+          existingNote = existing[widget.selectedDateStr] ?? "";
           break;
         }
       }
     }
-
-    // Set the initial value of the TextEditingController to the existing note
     _noteController.text = existingNote;
 
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Add Note'),
+          title: Text('إضافة ملاحظة'),
           content: SingleChildScrollView(
-            // إضافة SingleChildScrollView هنا
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextField(
-                  // استخدام TextField
                   style: TextStyle(color: Colors.green),
                   decoration: InputDecoration(
                     filled: true,
                     fillColor: Colors.white,
-                    hintText: 'Add note',
+                    hintText: 'أضف ملاحظة',
                     hintStyle: TextStyle(color: Colors.green),
-                    contentPadding:
-                        EdgeInsets.symmetric(vertical: 15.0, horizontal: 20.0),
+                    contentPadding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 20.0),
                     enabledBorder: OutlineInputBorder(
                       borderSide: BorderSide(color: Colors.orange, width: 2.0),
                       borderRadius: BorderRadius.circular(20.0),
@@ -533,51 +437,38 @@ ${Constants.teacherName}
                     ),
                     suffixIcon: IconButton(
                       icon: Icon(Icons.clear, color: Colors.orange),
-                      onPressed: () {
-                        _noteController.clear();
-                      },
+                      onPressed: () => _noteController.clear(),
                     ),
                   ),
                   cursorColor: Colors.green,
                   controller: _noteController,
-                  autofocus:
-                      true, // إضافة autofocus لجعل الحقل يأخذ التركيز تلقائيًا
+                  autofocus: true,
                 ),
               ],
             ),
           ),
           actions: <Widget>[
             TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text('Cancel'),
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('إلغاء'),
             ),
             TextButton(
               onPressed: () {
                 String note = _noteController.text;
-                String dateKey =
-                    widget.selectedDateStr; // Use the selected date
-
-                // Check if a note for the specific date already exists
+                String dateKey = widget.selectedDateStr;
                 bool noteExists = false;
                 if (widget.studentModel.notes != null) {
                   for (var existing in widget.studentModel.notes!) {
                     if (existing.containsKey(dateKey)) {
-                      // Update the existing note
                       existing[dateKey] = note;
                       noteExists = true;
                       break;
                     }
                   }
                 }
-
-                // If the note does not exist, add a new entry
                 if (!noteExists) {
                   widget.studentModel.notes?.add({dateKey: note});
                 }
-
-                // Call the Firebase function to update the student with the new notes
                 Firebasefunctions.updateStudentInAbsence(
                   widget.selectedDate,
                   widget.magmo3aModel.id,
@@ -587,7 +478,7 @@ ${Constants.teacherName}
                 );
                 Navigator.of(context).pop();
               },
-              child: Text('Save'),
+              child: Text('حفظ'),
             ),
           ],
         );
