@@ -67,7 +67,7 @@ class AbsentPage extends StatelessWidget {
               centerTitle: true,
               backgroundColor: app_colors.green,
               title: Image.asset(
-                "assets/images/2....logo.png",
+                "assets/images/2....2.png",
                 height: 100,
                 width: 90,
               ),
