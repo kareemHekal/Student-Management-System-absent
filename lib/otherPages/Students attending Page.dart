@@ -91,7 +91,7 @@ class _StudentsAttendingState extends State<StudentsAttending> {
           centerTitle: true,
           backgroundColor: app_colors.green,
           title: Image.asset(
-            "assets/images/2....2.png",
+            "assets/images/logo.png",
             height: 100,
             width: 90,
           ),
@@ -161,7 +161,7 @@ class _StudentsAttendingState extends State<StudentsAttending> {
           children: [
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 60),
-              child: Center(child: Image.asset("assets/images/1......1.png")),
+              child: Center(child: Image.asset("assets/images/logo.png")),
             ),
             filteredStudents.isEmpty
                 ? Padding(
