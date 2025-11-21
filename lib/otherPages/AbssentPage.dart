@@ -46,7 +46,7 @@ class AbsentPage extends StatelessWidget {
           final cubit = context.read<AbsentCubit>();
           final selectedDate = DateTime.parse(cubit.selectedDateStr);
           final today = DateTime.now();
-          final tomorrow = today.add(const Duration(days: 1));
+          final afterTomorrow = today.add(const Duration(days: 2));
 
           if (state is AbsentLoading) {
             return const Scaffold(body: Center(child: CircularProgressIndicator()));
@@ -74,7 +74,7 @@ class AbsentPage extends StatelessWidget {
               toolbarHeight: 150,
               actions: [
                 if (cubit.isAttendanceStarted == true &&
-                    selectedDate.isBefore(tomorrow)) ...[
+                    selectedDate.isBefore(afterTomorrow)) ...[
                   IconButton(
                     icon: Image.asset("assets/images/qr-code.png",
                         width: 40, height: 40),
@@ -162,7 +162,7 @@ class AbsentPage extends StatelessWidget {
             ),
             body: state == AbsentLoading()
                 ? const Center(child: CircularProgressIndicator())
-                : selectedDate.isAfter(tomorrow)
+                : selectedDate.isAfter(afterTomorrow)
                 ? const Center(
               child: Text(
                 "لا يمكنك تسجيل حضور لتواريخ مستقبلية بعد الغد.",
@@ -173,7 +173,7 @@ class AbsentPage extends StatelessWidget {
               children: [
                 if (cubit.isAttendanceStarted != true &&
                     cubit.attendStudents.isEmpty &&
-                    selectedDate.isBefore(tomorrow))
+                    selectedDate.isBefore(afterTomorrow))
                   Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: Row(
