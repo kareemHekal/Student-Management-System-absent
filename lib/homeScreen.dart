@@ -51,7 +51,7 @@ class _HomescreenState extends State<Homescreen> {
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 60),
-            child: Center(child: Image.asset("assets/images/logo.png")),
+            child: Center(child: Image.asset("assets/images/studenizer_logo_2.png")),
           ),
           Column(
             children: [
