@@ -3,6 +3,7 @@ import 'package:ai_barcode_scanner/ai_barcode_scanner.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../firbase/FirebaseFunctions.dart';
+import '../../loading_alert/run_with_loading.dart';
 import '../../models/Magmo3amodel.dart';
 import '../../models/Studentmodel.dart';
 import '../../models/absence_model.dart';
@@ -113,7 +114,8 @@ class AbsentCubit extends Cubit<AbsentState> {
 
     for (var student in studentsList) {
       student.countingAbsentDays ??= [];
-      student.countingAbsentDays!.add(DayRecord(date: selectedDateStr, day: selectedDay));
+      student.countingAbsentDays!
+          .add(DayRecord(date: selectedDateStr, day: selectedDay));
       await Firebasefunctions.updateStudentInCollection(
         student.grade ?? "",
         student.id,
@@ -141,7 +143,8 @@ class AbsentCubit extends Cubit<AbsentState> {
   }
 
   // ------------------- ADD STUDENT TO PRESENT -------------------
-  Future<void> _addStudentToPresent(Studentmodel student, String realStudentId, BuildContext context) async {
+  Future<void> _addStudentToPresent(
+      Studentmodel student, String realStudentId, BuildContext context) async {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
 
     if (attendStudents.any((s) => s.id == student.id)) {
@@ -203,13 +206,15 @@ class AbsentCubit extends Cubit<AbsentState> {
     emit(ScanSuccess(student));
   }
 
-  Future<void> updateStudentAttendance(Studentmodel student, String studentId) async {
+  Future<void> updateStudentAttendance(
+      Studentmodel student, String studentId) async {
     student.countingAttendedDays ??= [];
-    student.countingAttendedDays!.add(DayRecord(date: selectedDateStr, day: selectedDay));
+    student.countingAttendedDays!
+        .add(DayRecord(date: selectedDateStr, day: selectedDay));
 
     student.countingAbsentDays ??= [];
     student.countingAbsentDays!.removeWhere((dayRecord) =>
-    dayRecord.date == selectedDateStr && dayRecord.day == selectedDay);
+        dayRecord.date == selectedDateStr && dayRecord.day == selectedDay);
 
     await Firebasefunctions.updateStudentInCollection(
       magmo3aModel.grade ?? "",
@@ -220,6 +225,9 @@ class AbsentCubit extends Cubit<AbsentState> {
 
   // ------------------- SCAN QR -------------------
   Future<void> _scanQrcode(BuildContext context) async {
+    MobileScannerController _scannerController = MobileScannerController(
+      detectionSpeed: DetectionSpeed.noDuplicates,
+    );
     ScaffoldMessengerState scaffoldMessenger = ScaffoldMessenger.of(context);
     Navigator.of(context).push(
       MaterialPageRoute(
@@ -228,32 +236,39 @@ class AbsentCubit extends Cubit<AbsentState> {
           child: AiBarcodeScanner(
             onDispose: () => debugPrint("Barcode scanner disposed!"),
             hideGalleryButton: false,
-            controller: MobileScannerController(detectionSpeed: DetectionSpeed.noDuplicates),
+            controller: _scannerController,
             onDetect: (BarcodeCapture capture) async {
-              final scannedValue = capture.barcodes.first.rawValue;
-              if (scannedValue == null) return;
+              _scannerController.stop();
+              await runWithLoading(context, () async {
+                final scannedValue = capture.barcodes.first.rawValue;
+                if (scannedValue == null) return;
 
-              scaffoldMessenger.clearSnackBars();
+                scaffoldMessenger.clearSnackBars();
 
-              final student = await Firebasefunctions.getStudentById(
-                magmo3aModel.grade ?? "",
-                scannedValue,
-              );
-
-              if (student != null && student.hisGroupsId?.contains(magmo3aModel.id) == true) {
-                await _addStudentToPresent(student, scannedValue, context);
-              } else {
-                scaffoldMessenger.showSnackBar(
-                  SnackBar(
-                    content: Text(student == null
-                        ? "لم يتم العثور على الطالب!"
-                        : "الطالب ليس ضمن هذه المجموعة!"),
-                    backgroundColor: Colors.red,
-                    duration: const Duration(milliseconds: 800),
-                    behavior: SnackBarBehavior.floating,
-                  ),
+                final student = await Firebasefunctions.getStudentById(
+                  magmo3aModel.grade ?? "",
+                  scannedValue,
                 );
-              }
+
+                if (student != null &&
+                    student.hisGroupsId?.contains(magmo3aModel.id) == true) {
+                  await _addStudentToPresent(student, scannedValue, context);
+                } else {
+                  scaffoldMessenger.showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        student == null
+                            ? "لم يتم العثور على الطالب!"
+                            : "الطالب ليس ضمن هذه المجموعة!",
+                      ),
+                      backgroundColor: Colors.red,
+                      duration: const Duration(milliseconds: 800),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                }
+              });
+              _scannerController.start();
             },
           ),
         ),
@@ -266,8 +281,10 @@ class AbsentCubit extends Cubit<AbsentState> {
     filteredStudentsList = query.isEmpty
         ? studentsList
         : studentsList
-        .where((student) => (student.name ?? '').toLowerCase().contains(query.toLowerCase()))
-        .toList();
+            .where((student) => (student.name ?? '')
+                .toLowerCase()
+                .contains(query.toLowerCase()))
+            .toList();
 
     emit(SearchResultsUpdated(filteredStudentsList));
   }

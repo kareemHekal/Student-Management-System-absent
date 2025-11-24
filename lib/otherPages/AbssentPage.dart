@@ -5,6 +5,7 @@ import '../cards/StudentWidget.dart';
 import '../colors_app.dart';
 import '../firbase/FirebaseFunctions.dart';
 import '../homeScreen.dart';
+import '../loading_alert/run_with_loading.dart';
 import '../models/Magmo3amodel.dart';
 import '../models/absence_model.dart';
 import 'view_model/cubit.dart';
@@ -49,18 +50,20 @@ class AbsentPage extends StatelessWidget {
           final afterTomorrow = today.add(const Duration(days: 2));
 
           if (state is AbsentLoading) {
-            return const Scaffold(body: Center(child: CircularProgressIndicator()));
+            return const Scaffold(
+                body: Center(child: CircularProgressIndicator()));
           }
 
           return Scaffold(
             appBar: AppBar(
               leading: IconButton(
-                icon: const Icon(Icons.arrow_back_ios, color: app_colors.orange),
+                icon:
+                    const Icon(Icons.arrow_back_ios, color: app_colors.orange),
                 onPressed: () {
                   Navigator.pushAndRemoveUntil(
                     context,
                     MaterialPageRoute(builder: (_) => const Homescreen()),
-                        (route) => false,
+                    (route) => false,
                   );
                 },
               ),
@@ -89,7 +92,8 @@ class AbsentPage extends StatelessWidget {
                       showModalBottomSheet(
                         context: context,
                         shape: const RoundedRectangleBorder(
-                          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                          borderRadius:
+                              BorderRadius.vertical(top: Radius.circular(16)),
                         ),
                         builder: (context) {
                           return CustomBottomSheet(
@@ -111,177 +115,182 @@ class AbsentPage extends StatelessWidget {
               ],
               bottom: cubit.isAttendanceStarted == true
                   ? PreferredSize(
-                preferredSize: const Size.fromHeight(80),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-                  child: Column(
-                    children: [
-                      TextFormField(
-                        controller: cubit.searchController,
-                        onChanged: (val) {
-                          cubit.handleIntent(SearchStudent(query: val));
-                        },
-                        decoration: InputDecoration(
-                          filled: true,
-                          fillColor: Colors.white,
-                          hintText: 'بحث',
-                          suffixIcon: IconButton(
-                            icon: const Icon(Icons.clear, color: app_colors.orange),
-                            onPressed: () {
-                              cubit.searchController.clear();
-                              cubit.handleIntent(SearchStudent(query: ''));
-                            },
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(20),
-                            borderSide: const BorderSide(
-                                color: app_colors.orange, width: 2),
-                          ),
+                      preferredSize: const Size.fromHeight(80),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 15, vertical: 10),
+                        child: Column(
+                          children: [
+                            TextFormField(
+                              controller: cubit.searchController,
+                              onChanged: (val) {
+                                cubit.handleIntent(SearchStudent(query: val));
+                              },
+                              decoration: InputDecoration(
+                                filled: true,
+                                fillColor: Colors.white,
+                                hintText: 'بحث',
+                                suffixIcon: IconButton(
+                                  icon: const Icon(Icons.clear,
+                                      color: app_colors.orange),
+                                  onPressed: () {
+                                    cubit.searchController.clear();
+                                    cubit
+                                        .handleIntent(SearchStudent(query: ''));
+                                  },
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                  borderSide: const BorderSide(
+                                      color: app_colors.orange, width: 2),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              children: [
+                                Text('المجموع: ${cubit.numberofstudents}',
+                                    style: const TextStyle(
+                                        color: app_colors.orange)),
+                                Text('الغياب: ${cubit.studentsList.length}',
+                                    style: const TextStyle(
+                                        color: app_colors.orange)),
+                                Text('الحضور: ${cubit.attendStudents.length}',
+                                    style: const TextStyle(
+                                        color: app_colors.orange)),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 10),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          Text('المجموع: ${cubit.numberofstudents}',
-                              style: const TextStyle(
-                                  color: app_colors.orange)),
-                          Text('الغياب: ${cubit.studentsList.length}',
-                              style: const TextStyle(
-                                  color: app_colors.orange)),
-                          Text('الحضور: ${cubit.attendStudents.length}',
-                              style: const TextStyle(
-                                  color: app_colors.orange)),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              )
+                    )
                   : null,
             ),
             body: state == AbsentLoading()
                 ? const Center(child: CircularProgressIndicator())
                 : selectedDate.isAfter(afterTomorrow)
-                ? const Center(
-              child: Text(
-                "لا يمكنك تسجيل حضور لتواريخ مستقبلية بعد الغد.",
-                style: TextStyle(color: Colors.red, fontSize: 16),
-              ),
-            )
-                : Column(
-              children: [
-                if (cubit.isAttendanceStarted != true &&
-                    cubit.attendStudents.isEmpty &&
-                    selectedDate.isBefore(afterTomorrow))
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        ElevatedButton(
-                          onPressed: () async {
-                            cubit.numberofstudents =
-                                cubit.studentsList.length;
-                            await Firebasefunctions
-                                .addAbsenceToSubcollection(
-                              cubit.selectedDay,
-                              cubit.magmo3aModel.id,
-                              AbsenceModel(
-                                date: cubit.selectedDateStr,
-                                numberOfStudents:
-                                cubit.numberofstudents,
-                                absentStudents: cubit.studentsList,
-                                attendStudents:
-                                cubit.attendStudents,
-                              ),
-                            );
-                            cubit.handleIntent(StartTakingAttendance());
-                          },
-                          style: ElevatedButton.styleFrom(
-                              backgroundColor: app_colors.orange),
-                          child: const Text(
-                            "ابدأ تسجيل الغياب",
-                            style: TextStyle(color: Colors.white),
-                          ),
+                    ? const Center(
+                        child: Text(
+                          "لا يمكنك تسجيل حضور لتواريخ مستقبلية بعد الغد.",
+                          style: TextStyle(color: Colors.red, fontSize: 16),
                         ),
-                      ],
-                    ),
-                  ),
-                if (cubit.isAttendanceStarted == true)
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: cubit.filteredStudentsList.length,
-                      itemBuilder: (context, index) {
-                        final student =
-                        cubit.filteredStudentsList[index];
-                        return GestureDetector(
-                          onLongPress: () async {
-                            final confirm = await showDialog(
-                              context: context,
-                              builder: (BuildContext context) {
-                                return AlertDialog(
-                                  title: Text(
-                                    'تأكيد الحذف',
-                                    style: TextStyle(
-                                        color: Colors.green[900]),
-                                  ),
-                                  content: Text(
-                                    'هل تريد حذف هذا الطالب من الغياب؟',
-                                    style: TextStyle(
-                                        color: Colors.green[800]),
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      child: Text(
-                                        'إلغاء',
-                                        style: TextStyle(
-                                            color: Colors.green[400]),
-                                      ),
-                                      onPressed: () =>
-                                          Navigator.pop(context, false),
+                      )
+                    : Column(
+                        children: [
+                          if (cubit.isAttendanceStarted != true &&
+                              cubit.attendStudents.isEmpty &&
+                              selectedDate.isBefore(afterTomorrow))
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  ElevatedButton(
+                                    onPressed: () async {
+                                      cubit.numberofstudents =
+                                          cubit.studentsList.length;
+                                      await Firebasefunctions
+                                          .addAbsenceToSubcollection(
+                                        cubit.selectedDay,
+                                        cubit.magmo3aModel.id,
+                                        AbsenceModel(
+                                          date: cubit.selectedDateStr,
+                                          numberOfStudents:
+                                              cubit.numberofstudents,
+                                          absentStudents: cubit.studentsList,
+                                          attendStudents: cubit.attendStudents,
+                                        ),
+                                      );
+                                      cubit.handleIntent(
+                                          StartTakingAttendance());
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                        backgroundColor: app_colors.orange),
+                                    child: const Text(
+                                      "ابدأ تسجيل الغياب",
+                                      style: TextStyle(color: Colors.white),
                                     ),
-                                    ElevatedButton(
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.green,
-                                      ),
-                                      onPressed: () =>
-                                          Navigator.pop(context, true),
-                                      child: const Text(
-                                        'حذف',
-                                        style: TextStyle(
-                                            color: Colors.white),
-                                      ),
-                                    ),
-                                  ],
-                                  backgroundColor: Colors.green[50],
-                                );
-                              },
-                            );
+                                  ),
+                                ],
+                              ),
+                            ),
+                          if (cubit.isAttendanceStarted == true)
+                            Expanded(
+                              child: ListView.builder(
+                                itemCount: cubit.filteredStudentsList.length,
+                                itemBuilder: (context, index) {
+                                  final student =
+                                      cubit.filteredStudentsList[index];
+                                  return GestureDetector(
+                                    onLongPress: () async {
+                                      final confirm = await showDialog(
+                                        context: context,
+                                        builder: (BuildContext context) {
+                                          return AlertDialog(
+                                            title: Text(
+                                              'تأكيد الحذف',
+                                              style: TextStyle(
+                                                  color: Colors.green[900]),
+                                            ),
+                                            content: Text(
+                                              'هل تريد حذف هذا الطالب من الغياب؟',
+                                              style: TextStyle(
+                                                  color: Colors.green[800]),
+                                            ),
+                                            actions: [
+                                              TextButton(
+                                                child: Text(
+                                                  'إلغاء',
+                                                  style: TextStyle(
+                                                      color: Colors.green[400]),
+                                                ),
+                                                onPressed: () => Navigator.pop(
+                                                    context, false),
+                                              ),
+                                              ElevatedButton(
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor: Colors.green,
+                                                ),
+                                                onPressed: () => Navigator.pop(
+                                                    context, true),
+                                                child: const Text(
+                                                  'حذف',
+                                                  style: TextStyle(
+                                                      color: Colors.white),
+                                                ),
+                                              ),
+                                            ],
+                                            backgroundColor: Colors.green[50],
+                                          );
+                                        },
+                                      );
 
-                            if (confirm == true) {
-                              await cubit.handleIntent(
-                                AddStudentToPresent(
-                                  context: context,
-                                  student: student,
-                                  realStudentId: student.id,
-                                ),
-                              );
-                            }
-                          },
-                          child: StudentWidget(
-                            selectedDate: cubit.selectedDay,
-                            selectedDateStr: cubit.selectedDateStr,
-                            magmo3aModel: cubit.magmo3aModel,
-                            studentModel: student,
-                            grade: cubit.magmo3aModel.grade,
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-              ],
-            ),
+                                      if (confirm == true) {
+                                        runWithLoading(context, () async {
+                                          await cubit.handleIntent(
+                                            AddStudentToPresent(
+                                              context: context,
+                                              student: student,
+                                              realStudentId: student.id,
+                                            ),
+                                          );
+                                        });
+                                      }
+                                    },
+                                    child: StudentWidget(
+                                      selectedDate: cubit.selectedDay,
+                                      selectedDateStr: cubit.selectedDateStr,
+                                      magmo3aModel: cubit.magmo3aModel,
+                                      studentModel: student,
+                                      grade: cubit.magmo3aModel.grade,
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                        ],
+                      ),
           );
         },
       ),
